@@ -33,7 +33,7 @@ A.devRelatoNovo=()=>{DV=devNew();DV.step=1;RL={txt:'',res:null,resp:{},busy:fals
 /* ---------- menu lateral (computador) ---------- */
 function sidebar(curV){const tabs=tabsAtuais(),G=menuGroups();const isOn=v=>v===curV||(stack.length===1&&v===curTab&&curV===curTab);
  const item=(icn,lab,act,v,extra='')=>`<button class="si ${isOn(v)?'on':''}" data-a="${act}" data-v="${v}" ${extra}>${ic(icn)}<span>${esc(lab)}</span></button>`;
- return `<aside class="side" aria-label="Menu"><div class="sbrand"><span style="width:24px;height:30px;color:#F7F7F3;display:inline-flex">${LOGO}</span><span>Prumo <b>Feedback</b></span></div>
+ return `<aside class="side" aria-label="Menu"><div class="sbrand" aria-label="Prumo Feedback"><span class="wm" aria-hidden="true">${LOGO}</span><span aria-hidden="true">rumo <b>Feedback</b></span></div>
  <nav>${tabs.filter(t=>t[0]!=='more').map(t=>item(t[2],t[1],'tab',t[0])).join('')}
  ${G.map(g=>`<p class="sgrp">${esc(g[0])}</p>${g[1].filter(x=>!tabs.some(t=>t[0]===x[2])).map(x=>item(x[0],x[1],'side',x[2])).join('')}`).join('')}</nav>
  <div class="sfoot"><div class="seg sseg">${[['lider','Líder'],['rh','RH'],['ambos','Ambos']].map(x=>`<button class="${visaoAtual()===x[0]?'on':''}" data-a="trocaVisao" data-x="${x[0]}">${x[1]}</button>`).join('')}</div>

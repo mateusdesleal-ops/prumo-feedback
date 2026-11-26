@@ -365,3 +365,14 @@ nav.tabs .sim svg{background:var(--plum)}
 .hdbrand b{color:var(--coral);font-weight:600}
 .hdtit h1{font-size:13px!important;font-weight:500!important;color:var(--mut);flex:none}
 @media(min-width:1024px){.hdbrand{display:none}.hdtit h1{font-size:22px!important;font-weight:700!important;color:var(--ink)}}
+/* marca: o P da logo substitui o P de Prumo */
+.hdbrand,.sbrand{display:flex;align-items:flex-end;gap:0}
+.wm{display:inline-flex;color:var(--plum);flex:none}
+.wm svg{width:100%;height:100%}
+.hdbrand .wm{width:19px;height:24px;margin:0 1px 2px 4px}
+.hdbrand{font-size:20px;line-height:1}
+.hdtit{gap:3px;margin-left:4px}
+.sbrand{gap:0!important;font-size:20px!important;line-height:1}
+.sbrand .wm{width:20px;height:25px;margin:0 1px 2px 0;color:var(--plum)!important}
+@media(min-width:1024px){.hdbrand{display:none!important}}
+@media(min-width:1024px){.sbrand{color:var(--plum)!important}}

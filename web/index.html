@@ -382,6 +382,17 @@ nav.tabs .sim svg{background:var(--plum)}
 .hdbrand b{color:var(--coral);font-weight:600}
 .hdtit h1{font-size:13px!important;font-weight:500!important;color:var(--mut);flex:none}
 @media(min-width:1024px){.hdbrand{display:none}.hdtit h1{font-size:22px!important;font-weight:700!important;color:var(--ink)}}
+/* marca: o P da logo substitui o P de Prumo */
+.hdbrand,.sbrand{display:flex;align-items:flex-end;gap:0}
+.wm{display:inline-flex;color:var(--plum);flex:none}
+.wm svg{width:100%;height:100%}
+.hdbrand .wm{width:19px;height:24px;margin:0 1px 2px 4px}
+.hdbrand{font-size:20px;line-height:1}
+.hdtit{gap:3px;margin-left:4px}
+.sbrand{gap:0!important;font-size:20px!important;line-height:1}
+.sbrand .wm{width:20px;height:25px;margin:0 1px 2px 0;color:var(--plum)!important}
+@media(min-width:1024px){.hdbrand{display:none!important}}
+@media(min-width:1024px){.sbrand{color:var(--plum)!important}}
 
 body{padding-top:env(safe-area-inset-top)}
 </style>
@@ -589,7 +600,7 @@ function render(){
  if(!S.perfil.onb){app.className='';app.innerHTML=V.onb();return}
  const top=stack[stack.length-1],fn=V[top.v]||V.home,r=fn(top.p)||{};
  app.className='shell';const curV=top.v;
- app.innerHTML=`${sidebar(curV)}<header class="top">${stack.length>1?`<button class="ib" data-a="back" aria-label="Voltar">${ic('back')}</button>`:`<span class="hdlogo" style="width:26px;height:32px;color:var(--pri);margin:0 6px 0 4px;display:inline-flex">${LOGO}</span>`}${stack.length>1?`<h1>${esc(r.t||'Prumo Feedback')}</h1>`:`<div class="hdtit"><span class="hdbrand">Prumo <b>Feedback</b></span><h1>${esc(r.t||'Início')}</h1></div>`}${AJUDA[top.v]?`<button class="ib" data-a="ajuda" data-v="${top.v}" aria-label="Como funciona esta tela">${ic('help')}</button>`:''}${r.act||''}</header><main>${r.h||''}</main><nav class="tabs" aria-label="Navegação principal">${tabsAtuais().map(t=>`<button class="${curTab===t[0]?'on':''} ${t[0]==='simula'?'sim':''}" data-a="tab" data-v="${t[0]}" aria-label="${t[1]}">${ic(t[2])}<span>${t[1]}</span></button>`).join('')}</nav>`;
+ app.innerHTML=`${sidebar(curV)}<header class="top">${stack.length>1?`<button class="ib" data-a="back" aria-label="Voltar">${ic('back')}</button>`:''}${stack.length>1?`<h1>${esc(r.t||'Prumo Feedback')}</h1>`:`<div class="hdtit"><span class="hdbrand" aria-label="Prumo Feedback"><span class="wm" aria-hidden="true">${LOGO}</span><span aria-hidden="true">rumo <b>Feedback</b></span></span><h1>${esc(r.t||'Início')}</h1></div>`}${AJUDA[top.v]?`<button class="ib" data-a="ajuda" data-v="${top.v}" aria-label="Como funciona esta tela">${ic('help')}</button>`:''}${r.act||''}</header><main>${r.h||''}</main><nav class="tabs" aria-label="Navegação principal">${tabsAtuais().map(t=>`<button class="${curTab===t[0]?'on':''} ${t[0]==='simula'?'sim':''}" data-a="tab" data-v="${t[0]}" aria-label="${t[1]}">${ic(t[2])}<span>${t[1]}</span></button>`).join('')}</nav>`;
  if(r.after)r.after();
  enhance(top.v);
 }
@@ -1574,7 +1585,7 @@ A.devRelatoNovo=()=>{DV=devNew();DV.step=1;RL={txt:'',res:null,resp:{},busy:fals
 /* ---------- menu lateral (computador) ---------- */
 function sidebar(curV){const tabs=tabsAtuais(),G=menuGroups();const isOn=v=>v===curV||(stack.length===1&&v===curTab&&curV===curTab);
  const item=(icn,lab,act,v,extra='')=>`<button class="si ${isOn(v)?'on':''}" data-a="${act}" data-v="${v}" ${extra}>${ic(icn)}<span>${esc(lab)}</span></button>`;
- return `<aside class="side" aria-label="Menu"><div class="sbrand"><span style="width:24px;height:30px;color:#F7F7F3;display:inline-flex">${LOGO}</span><span>Prumo <b>Feedback</b></span></div>
+ return `<aside class="side" aria-label="Menu"><div class="sbrand" aria-label="Prumo Feedback"><span class="wm" aria-hidden="true">${LOGO}</span><span aria-hidden="true">rumo <b>Feedback</b></span></div>
  <nav>${tabs.filter(t=>t[0]!=='more').map(t=>item(t[2],t[1],'tab',t[0])).join('')}
  ${G.map(g=>`<p class="sgrp">${esc(g[0])}</p>${g[1].filter(x=>!tabs.some(t=>t[0]===x[2])).map(x=>item(x[0],x[1],'side',x[2])).join('')}`).join('')}</nav>
  <div class="sfoot"><div class="seg sseg">${[['lider','Líder'],['rh','RH'],['ambos','Ambos']].map(x=>`<button class="${visaoAtual()===x[0]?'on':''}" data-a="trocaVisao" data-x="${x[0]}">${x[1]}</button>`).join('')}</div>
