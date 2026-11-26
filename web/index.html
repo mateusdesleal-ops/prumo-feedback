@@ -377,6 +377,11 @@ nav.tabs .sim svg{background:var(--plum)}
 .simcta>span:first-child{background:#E8604C!important}
 .cb.mic{background:#E8604C}
 .call{background:#2E1C3B}
+.hdtit{flex:1;display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.hdbrand{font-weight:700;font-size:17px;color:var(--plum);letter-spacing:-.01em;white-space:nowrap}
+.hdbrand b{color:var(--coral);font-weight:600}
+.hdtit h1{font-size:13px!important;font-weight:500!important;color:var(--mut);flex:none}
+@media(min-width:1024px){.hdbrand{display:none}.hdtit h1{font-size:22px!important;font-weight:700!important;color:var(--ink)}}
 
 body{padding-top:env(safe-area-inset-top)}
 </style>
@@ -584,7 +589,7 @@ function render(){
  if(!S.perfil.onb){app.className='';app.innerHTML=V.onb();return}
  const top=stack[stack.length-1],fn=V[top.v]||V.home,r=fn(top.p)||{};
  app.className='shell';const curV=top.v;
- app.innerHTML=`${sidebar(curV)}<header class="top">${stack.length>1?`<button class="ib" data-a="back" aria-label="Voltar">${ic('back')}</button>`:`<span class="hdlogo" style="width:26px;height:32px;color:var(--pri);margin:0 6px 0 4px;display:inline-flex">${LOGO}</span>`}<h1>${esc(r.t||'Prumo Feedback')}</h1>${AJUDA[top.v]?`<button class="ib" data-a="ajuda" data-v="${top.v}" aria-label="Como funciona esta tela">${ic('help')}</button>`:''}${r.act||''}</header><main>${r.h||''}</main><nav class="tabs" aria-label="Navegação principal">${tabsAtuais().map(t=>`<button class="${curTab===t[0]?'on':''} ${t[0]==='simula'?'sim':''}" data-a="tab" data-v="${t[0]}" aria-label="${t[1]}">${ic(t[2])}<span>${t[1]}</span></button>`).join('')}</nav>`;
+ app.innerHTML=`${sidebar(curV)}<header class="top">${stack.length>1?`<button class="ib" data-a="back" aria-label="Voltar">${ic('back')}</button>`:`<span class="hdlogo" style="width:26px;height:32px;color:var(--pri);margin:0 6px 0 4px;display:inline-flex">${LOGO}</span>`}${stack.length>1?`<h1>${esc(r.t||'Prumo Feedback')}</h1>`:`<div class="hdtit"><span class="hdbrand">Prumo <b>Feedback</b></span><h1>${esc(r.t||'Início')}</h1></div>`}${AJUDA[top.v]?`<button class="ib" data-a="ajuda" data-v="${top.v}" aria-label="Como funciona esta tela">${ic('help')}</button>`:''}${r.act||''}</header><main>${r.h||''}</main><nav class="tabs" aria-label="Navegação principal">${tabsAtuais().map(t=>`<button class="${curTab===t[0]?'on':''} ${t[0]==='simula'?'sim':''}" data-a="tab" data-v="${t[0]}" aria-label="${t[1]}">${ic(t[2])}<span>${t[1]}</span></button>`).join('')}</nav>`;
  if(r.after)r.after();
  enhance(top.v);
 }

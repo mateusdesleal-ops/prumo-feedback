@@ -360,3 +360,8 @@ nav.tabs .sim svg{background:var(--plum)}
 .simcta>span:first-child{background:#E8604C!important}
 .cb.mic{background:#E8604C}
 .call{background:#2E1C3B}
+.hdtit{flex:1;display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.hdbrand{font-weight:700;font-size:17px;color:var(--plum);letter-spacing:-.01em;white-space:nowrap}
+.hdbrand b{color:var(--coral);font-weight:600}
+.hdtit h1{font-size:13px!important;font-weight:500!important;color:var(--mut);flex:none}
+@media(min-width:1024px){.hdbrand{display:none}.hdtit h1{font-size:22px!important;font-weight:700!important;color:var(--ink)}}
