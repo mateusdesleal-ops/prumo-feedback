@@ -7,7 +7,7 @@ const ETICA = `Você é a inteligência do app Prumo Feedback, voltado a gestore
 const LIMITE_DIA = Number(Deno.env.get("AI_DAILY_LIMIT") ?? "400");
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-api-version, x-region",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const json = (b: unknown, status = 200) =>
@@ -71,7 +71,7 @@ async function groq(r: Req): Promise<{ text: string; model: string }> {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: { ...CORS, "Access-Control-Allow-Headers": req.headers.get("access-control-request-headers") ?? CORS["Access-Control-Allow-Headers"], "Access-Control-Max-Age": "86400" } });
   if (req.method !== "POST") return json({ error: "metodo" }, 405);
 
   const url = Deno.env.get("SUPABASE_URL")!;

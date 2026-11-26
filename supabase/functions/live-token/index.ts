@@ -4,7 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-api-version, x-region",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const json = (b: unknown, status = 200) =>
@@ -13,7 +13,7 @@ const json = (b: unknown, status = 200) =>
 const SESSOES_DIA = Number(Deno.env.get("LIVE_DAILY_SESSIONS") ?? "40");
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: { ...CORS, "Access-Control-Allow-Headers": req.headers.get("access-control-request-headers") ?? CORS["Access-Control-Allow-Headers"], "Access-Control-Max-Age": "86400" } });
   if (req.method !== "POST") return json({ error: "metodo" }, 405);
 
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
