@@ -82,7 +82,8 @@ const chips=(id,opts,sel=[],single)=>`<div class="chips" id="${id}">${opts.map(o
 const sel=(id,opts,v)=>`<select id="${id}">${opts.map(o=>{const [k,l]=Array.isArray(o)?o:[o,o];return `<option value="${esc(k)}" ${String(k)===String(v)?'selected':''}>${esc(l)}</option>`}).join('')}</select>`;
 const lidSel=(id,v,extra)=>sel(id,[...(extra||[]),...ativos().map(l=>[l.id,l.nome])],v);
 const empty=(icn,t,btn)=>`<div class="empty">${ic(icn)}<p>${esc(t)}</p>${btn||''}</div>`;
-const avatar=(n,sz=40)=>`<span class="av" style="width:${sz}px;height:${sz}px;font-size:${sz*.38}px">${esc(ini(n))}</span>`;
+const avCor=n=>{let h=0;for(const c of String(n||''))h=(h*31+c.charCodeAt(0))>>>0;return 'c'+(h%6)};
+const avatar=(n,sz=40)=>`<span class="av ${avCor(n)}" style="width:${sz}px;height:${sz}px;font-size:${sz*.38}px">${esc(ini(n))}</span>`;
 const sw=(id,on,lab,sub)=>`<label class="row" style="cursor:pointer"><span class="grow"><b style="font-weight:600">${esc(lab)}</b>${sub?`<br><span class="xs mut">${esc(sub)}</span>`:''}</span><span class="switch"><input type="checkbox" id="${id}" ${on?'checked':''}><span></span></span></label>`;
 
 /* ---------- IA ---------- */
