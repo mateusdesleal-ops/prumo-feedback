@@ -40,7 +40,7 @@ async function gemini(r: Req): Promise<{ text: string; model: string }> {
       if (text) return { text, model };
       last = "resposta_vazia";
     } else {
-      last = `gemini_${res.status}`;
+      last = `gemini_${res.status}:${model}:${(await res.text()).replace(/\s+/g, " ").slice(0, 160)}`;
       if (res.status !== 404 && res.status !== 400) break; // tenta o próximo modelo se o nome não existir
     }
   }
@@ -65,7 +65,7 @@ async function groq(r: Req): Promise<{ text: string; model: string }> {
       ...(r.json ? { response_format: { type: "json_object" } } : {}),
     }),
   });
-  if (!res.ok) throw new Error(`groq_${res.status}`);
+  if (!res.ok) throw new Error(`groq_${res.status}:${(await res.text()).replace(/\s+/g, " ").slice(0, 120)}`);
   const d = await res.json();
   return { text: d?.choices?.[0]?.message?.content ?? "", model };
 }
@@ -100,7 +100,8 @@ Deno.serve(async (req) => {
       erros.push(String((e as Error).message));
     }
   }
-  await admin.from("ai_usage").insert({ user_id: user.id, task: body.task ?? "geral", provider: "nenhum", ok: false });
-  const limite = erros.some((e) => e.endsWith("_429"));
+  console.error("falha_ia", erros.join(" || "));
+  await admin.from("ai_usage").insert({ user_id: user.id, task: body.task ?? "geral", provider: "nenhum", model: erros.join(" || ").slice(0, 900), ok: false });
+  const limite = erros.some((e) => e.includes("_429"));
   return json({ error: limite ? "limite_fornecedor" : "falha_ia", detalhes: erros }, limite ? 429 : 502);
 });
