@@ -18,7 +18,8 @@ type Req = { task?: string; prompt?: string; json?: boolean; tier?: "quick" | "d
 async function gemini(r: Req): Promise<{ text: string; model: string }> {
   const key = Deno.env.get("GEMINI_API_KEY");
   if (!key) throw new Error("sem_chave_gemini");
-  const models = [...new Set([Deno.env.get("GEMINI_MODEL") ?? "gemini-4-hydrogen", "gemini-4-hydrogen", "gemini-3.6-flash", "gemini-flash-latest"])];
+  const principal = Deno.env.get("GEMINI_MODEL") ?? "gemini-4-hydrogen";
+  const models = [principal, "gemini-3.6-flash", "gemini-flash-latest", "gemini-flash-lite-latest"].filter((m, i, a) => a.indexOf(m) === i);
   let last = "";
   for (const model of models) {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
@@ -40,8 +41,9 @@ async function gemini(r: Req): Promise<{ text: string; model: string }> {
       if (text) return { text, model };
       last = "resposta_vazia";
     } else {
-      last = `gemini_${res.status}:${model}:${(await res.text()).replace(/\s+/g, " ").slice(0, 160)}`;
-      if (res.status !== 404 && res.status !== 400) break; // tenta o próximo modelo se o nome não existir
+      last += (last ? " | " : "") + `gemini_${res.status}:${model}:${(await res.text()).replace(/\s+/g, " ").slice(0, 90)}`;
+      if (res.status === 401 || res.status === 403) break; // chave recusada: não adianta trocar de modelo
+      if (res.status >= 500) await new Promise((r) => setTimeout(r, 700)); // sobrecarga: espera um pouco e tenta o próximo
     }
   }
   throw new Error(last);
@@ -103,5 +105,6 @@ Deno.serve(async (req) => {
   console.error("falha_ia", erros.join(" || "));
   await admin.from("ai_usage").insert({ user_id: user.id, task: body.task ?? "geral", provider: "nenhum", model: erros.join(" || ").slice(0, 900), ok: false });
   const limite = erros.some((e) => e.includes("_429"));
-  return json({ error: limite ? "limite_fornecedor" : "falha_ia", detalhes: erros }, limite ? 429 : 502);
+  const sobrecarga = erros.some((e) => /gemini_50\d/.test(e));
+  return json({ error: limite ? "limite_fornecedor" : sobrecarga ? "sobrecarga" : "falha_ia", detalhes: erros }, limite ? 429 : 502);
 });
