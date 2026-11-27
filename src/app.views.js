@@ -37,5 +37,5 @@ function sidebar(curV){const tabs=tabsAtuais(),G=menuGroups();const isOn=v=>v===
  <nav>${tabs.filter(t=>t[0]!=='more').map(t=>item(t[2],t[1],'tab',t[0])).join('')}
  ${G.map(g=>`<p class="sgrp">${esc(g[0])}</p>${g[1].filter(x=>!tabs.some(t=>t[0]===x[2])).map(x=>item(x[0],x[1],'side',x[2])).join('')}`).join('')}</nav>
  <div class="sfoot"><div class="seg sseg">${[['lider','Líder'],['rh','RH'],['ambos','Ambos']].map(x=>`<button class="${visaoAtual()===x[0]?'on':''}" data-a="trocaVisao" data-x="${x[0]}">${x[1]}</button>`).join('')}</div>
- <button class="si" data-a="side" data-v="perfil">${avatar(S.perfil.nome||'Eu',28)}<span>${esc(S.perfil.nome||'Seu perfil')}<br><small>${esc(S.perfil.cargo||'')} · ${esc(S.plano)}</small></span></button></div></aside>`}
+ <button class="si" data-a="side" data-v="perfil">${avatar(S.perfil.nome||'Eu',28)}<span>${esc(S.perfil.nome||'Seu perfil')}<br><small>${esc(S.perfil.cargo||'')} · ${esc(nomePlano())}</small></span></button></div></aside>`}
 A.side=d=>{curTab='more';stack=[{v:d.v,p:{}}];render();scrollTo(0,0)};

@@ -45,7 +45,9 @@ function seed(){
 }
 function migrate(s){const b=blank();for(const k in b)if(s[k]===undefined)s[k]=b[k];if(s.uso.mes!==hoje().slice(0,7))s.uso={mes:hoje().slice(0,7),voz:0,video:0,extraVoz:s.uso.extraVoz||0,extraVideo:s.uso.extraVideo||0,mentor:0};return s}
 function save(){clearTimeout(saveT);saveT=setTimeout(async()=>{S.ts=Date.now();const j=JSON.stringify(S);try{localStorage.setItem(KEY,j)}catch(e){}if(CAP.db&&CAP.uid){try{await CAP.db.collection('data/users/'+CAP.uid).doc('app').set({j})}catch(e){}}},500)}
-const plano=()=>PLANOS.find(p=>p.id===S.plano)||PLANOS[0];
+const planoReal=()=>PLANOS.find(p=>p.id===S.plano)||PLANOS[0];
+const plano=()=>{const p=planoReal();return ACESSO_LIVRE?{...p,lid:9999,voz:9999,mentor:null}:p};
+const nomePlano=()=>ACESSO_LIVRE?'Acesso de teste':S.plano;
 const saldo=k=>k==='voz'?plano().voz+S.uso.extraVoz-S.uso.voz:plano().video+S.uso.extraVideo-S.uso.video;
 const lidN=id=>(S.lid.find(l=>l.id===id)||{}).nome||'';
 const ativos=()=>S.lid.filter(l=>l.status==='ativo');
@@ -153,7 +155,7 @@ V.home=()=>{
  const prox=ag.filter(i=>!i.ok&&i.data>=t).slice(0,3),rec=recomendacoes(),ref=REFLEX[new Date().getDate()%REFLEX.length];
  return {t:'Início',act:`<button class="ib" data-a="go" data-v="notifs" aria-label="Notificações">${ic('bell')}</button>`,h:`
  ${S.demo?`<div class="note" style="margin:0 0 12px">Você está usando dados de exemplo. <button class="btn sm line" style="margin-left:6px;min-height:30px" data-a="limparDemo">Começar do zero</button></div>`:''}
- <section class="hello"><span class="lg">${LOGO}</span><p class="mut sm">${esc(fdl(t))}</p><h2 style="margin-top:4px">${sau}${P.nome?', '+esc(P.nome.split(' ')[0]):''}</h2><p class="mut sm">${esc(P.cargo||'Líder')} · Plano ${esc(S.plano)}</p><q>${esc(ref)}</q></section>
+ <section class="hello"><span class="lg">${LOGO}</span><p class="mut sm">${esc(fdl(t))}</p><h2 style="margin-top:4px">${sau}${P.nome?', '+esc(P.nome.split(' ')[0]):''}</h2><p class="mut sm">${esc(P.cargo||'Líder')} · Plano ${esc(nomePlano())}</p><q>${esc(ref)}</q></section>
  <div class="sec"><h3>Seus indicadores</h3></div>
  <div class="kpis">${K.map(k=>`<button class="kpi" data-a="${k[2]==='team'?'tab':'go'}" data-v="${k[2]}"><b>${esc(k[0])}</b><span>${k[1]}</span></button>`).join('')}</div>
  <div class="sec"><h3>Ações rápidas</h3></div>
@@ -178,7 +180,7 @@ V.team=()=>{const lim=plano().lid;const L=S.lid.filter(l=>(teamF==='todos'||l.st
  <label class="f" style="position:relative"><span class="sr" style="position:absolute;left:-9999px">Buscar</span><input id="tq" placeholder="Buscar por nome, cargo ou área" value="${esc(teamQ)}"></label>
  <div class="seg">${[['ativo','Ativos'],['inativo','Inativos'],['todos','Todos']].map(f=>`<button class="${teamF===f[0]?'on':''}" data-a="teamF" data-f="${f[0]}">${f[1]}</button>`).join('')}</div>
  ${L.length?`<div class="list">${L.map(l=>{const ev=S.ev.filter(e=>e.lid===l.id).length+S.reun.filter(r=>r.lid===l.id).length;return `<button class="row" data-a="go" data-v="lid" data-id="${l.id}">${avatar(l.nome,44)}<span class="grow"><b style="font-weight:600">${esc(l.nome)}</b><br><span class="sm mut">${esc(l.cargo||'Sem cargo')}${l.depto?' · '+esc(l.depto):''}</span></span><span class="xs mut">${ev} registros</span>${ic('chev')}</button>`}).join('')}</div>`:empty('team',S.lid.length?'Nenhum liderado encontrado.':'Você ainda não cadastrou liderados. Tudo bem: o app funciona sem equipe.',`<button class="btn" style="margin-top:12px" data-a="go" data-v="lidEdit">Cadastrar liderado</button>`)}
- <p class="xs mut" style="margin-top:14px">${ativos().length} de ${lim>=999?'∞':lim} liderados ativos no plano ${esc(S.plano)}. Sem rankings ou perfis psicológicos: só registros profissionais.</p>`,
+ <p class="xs mut" style="margin-top:14px">${ativos().length} de ${lim>=999?'∞':lim} liderados ativos${ACESSO_LIVRE?' (acesso de teste, sem limite)':' no plano '+esc(S.plano)}. Sem rankings ou perfis psicológicos: só registros profissionais.</p>`,
  after(){const q=$('#tq');q.oninput=()=>{teamQ=q.value;const p=q.selectionStart;render();const n=$('#tq');n.focus();n.setSelectionRange(p,p)}}}};
 A.teamF=d=>{teamF=d.f;render()};
 V.lidEdit=p=>{const l=S.lid.find(x=>x.id===p.id)||{status:'ativo',comp:[]};return {t:p.id?'Editar liderado':'Novo liderado',h:`

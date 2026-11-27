@@ -39,6 +39,9 @@ const CEN=[
 const CRIT=[['clareza','Clareza e objetividade',15],['escuta','Escuta ativa',15],['assertividade','Assertividade',15],['empatia','Empatia verbal demonstrada',15],['estrutura','Estrutura',15],['solucoes','Orientação para soluções',15],['encerramento','Encerramento e compromissos',10]];
 const COMPET=['Comunicação','Feedback','Conflitos','Delegação','Escuta','Desempenho','Motivação','Decisão'];
 const DESAFIOS=['Dar feedbacks difíceis','Lidar com resistência','Delegar sem perder o controle','Motivar a equipe','Gerir conflitos','Organizar a rotina','Liderar antigos colegas','Cobrar resultados'];
+/* FASE DE TESTES: com ACESSO_LIVRE=true ninguém esbarra em limite de plano (liderados, minutos de voz, mensagens do Mentor).
+   Toda a estrutura de planos continua pronta: no lançamento, basta mudar para false. O vídeo segue "em breve" nos dois casos. */
+const ACESSO_LIVRE=true;
 const METODOS=[
  {id:'SCI',n:'SCI',d:'Situação, Comportamento e Impacto'},
  {id:'SBI',n:'SBI',d:'Situation, Behavior, Impact (equivalente internacional)'},

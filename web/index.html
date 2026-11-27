@@ -459,6 +459,9 @@ const CEN=[
 const CRIT=[['clareza','Clareza e objetividade',15],['escuta','Escuta ativa',15],['assertividade','Assertividade',15],['empatia','Empatia verbal demonstrada',15],['estrutura','Estrutura',15],['solucoes','Orientação para soluções',15],['encerramento','Encerramento e compromissos',10]];
 const COMPET=['Comunicação','Feedback','Conflitos','Delegação','Escuta','Desempenho','Motivação','Decisão'];
 const DESAFIOS=['Dar feedbacks difíceis','Lidar com resistência','Delegar sem perder o controle','Motivar a equipe','Gerir conflitos','Organizar a rotina','Liderar antigos colegas','Cobrar resultados'];
+/* FASE DE TESTES: com ACESSO_LIVRE=true ninguém esbarra em limite de plano (liderados, minutos de voz, mensagens do Mentor).
+   Toda a estrutura de planos continua pronta: no lançamento, basta mudar para false. O vídeo segue "em breve" nos dois casos. */
+const ACESSO_LIVRE=true;
 const METODOS=[
  {id:'SCI',n:'SCI',d:'Situação, Comportamento e Impacto'},
  {id:'SBI',n:'SBI',d:'Situation, Behavior, Impact (equivalente internacional)'},
@@ -589,7 +592,9 @@ function seed(){
 }
 function migrate(s){const b=blank();for(const k in b)if(s[k]===undefined)s[k]=b[k];if(s.uso.mes!==hoje().slice(0,7))s.uso={mes:hoje().slice(0,7),voz:0,video:0,extraVoz:s.uso.extraVoz||0,extraVideo:s.uso.extraVideo||0,mentor:0};return s}
 function save(){clearTimeout(saveT);saveT=setTimeout(async()=>{S.ts=Date.now();const j=JSON.stringify(S);try{localStorage.setItem(KEY,j)}catch(e){}if(CAP.db&&CAP.uid){try{await CAP.db.collection('data/users/'+CAP.uid).doc('app').set({j})}catch(e){}}},500)}
-const plano=()=>PLANOS.find(p=>p.id===S.plano)||PLANOS[0];
+const planoReal=()=>PLANOS.find(p=>p.id===S.plano)||PLANOS[0];
+const plano=()=>{const p=planoReal();return ACESSO_LIVRE?{...p,lid:9999,voz:9999,mentor:null}:p};
+const nomePlano=()=>ACESSO_LIVRE?'Acesso de teste':S.plano;
 const saldo=k=>k==='voz'?plano().voz+S.uso.extraVoz-S.uso.voz:plano().video+S.uso.extraVideo-S.uso.video;
 const lidN=id=>(S.lid.find(l=>l.id===id)||{}).nome||'';
 const ativos=()=>S.lid.filter(l=>l.status==='ativo');
@@ -697,7 +702,7 @@ V.home=()=>{
  const prox=ag.filter(i=>!i.ok&&i.data>=t).slice(0,3),rec=recomendacoes(),ref=REFLEX[new Date().getDate()%REFLEX.length];
  return {t:'Início',act:`<button class="ib" data-a="go" data-v="notifs" aria-label="Notificações">${ic('bell')}</button>`,h:`
  ${S.demo?`<div class="note" style="margin:0 0 12px">Você está usando dados de exemplo. <button class="btn sm line" style="margin-left:6px;min-height:30px" data-a="limparDemo">Começar do zero</button></div>`:''}
- <section class="hello"><span class="lg">${LOGO}</span><p class="mut sm">${esc(fdl(t))}</p><h2 style="margin-top:4px">${sau}${P.nome?', '+esc(P.nome.split(' ')[0]):''}</h2><p class="mut sm">${esc(P.cargo||'Líder')} · Plano ${esc(S.plano)}</p><q>${esc(ref)}</q></section>
+ <section class="hello"><span class="lg">${LOGO}</span><p class="mut sm">${esc(fdl(t))}</p><h2 style="margin-top:4px">${sau}${P.nome?', '+esc(P.nome.split(' ')[0]):''}</h2><p class="mut sm">${esc(P.cargo||'Líder')} · Plano ${esc(nomePlano())}</p><q>${esc(ref)}</q></section>
  <div class="sec"><h3>Seus indicadores</h3></div>
  <div class="kpis">${K.map(k=>`<button class="kpi" data-a="${k[2]==='team'?'tab':'go'}" data-v="${k[2]}"><b>${esc(k[0])}</b><span>${k[1]}</span></button>`).join('')}</div>
  <div class="sec"><h3>Ações rápidas</h3></div>
@@ -722,7 +727,7 @@ V.team=()=>{const lim=plano().lid;const L=S.lid.filter(l=>(teamF==='todos'||l.st
  <label class="f" style="position:relative"><span class="sr" style="position:absolute;left:-9999px">Buscar</span><input id="tq" placeholder="Buscar por nome, cargo ou área" value="${esc(teamQ)}"></label>
  <div class="seg">${[['ativo','Ativos'],['inativo','Inativos'],['todos','Todos']].map(f=>`<button class="${teamF===f[0]?'on':''}" data-a="teamF" data-f="${f[0]}">${f[1]}</button>`).join('')}</div>
  ${L.length?`<div class="list">${L.map(l=>{const ev=S.ev.filter(e=>e.lid===l.id).length+S.reun.filter(r=>r.lid===l.id).length;return `<button class="row" data-a="go" data-v="lid" data-id="${l.id}">${avatar(l.nome,44)}<span class="grow"><b style="font-weight:600">${esc(l.nome)}</b><br><span class="sm mut">${esc(l.cargo||'Sem cargo')}${l.depto?' · '+esc(l.depto):''}</span></span><span class="xs mut">${ev} registros</span>${ic('chev')}</button>`}).join('')}</div>`:empty('team',S.lid.length?'Nenhum liderado encontrado.':'Você ainda não cadastrou liderados. Tudo bem: o app funciona sem equipe.',`<button class="btn" style="margin-top:12px" data-a="go" data-v="lidEdit">Cadastrar liderado</button>`)}
- <p class="xs mut" style="margin-top:14px">${ativos().length} de ${lim>=999?'∞':lim} liderados ativos no plano ${esc(S.plano)}. Sem rankings ou perfis psicológicos: só registros profissionais.</p>`,
+ <p class="xs mut" style="margin-top:14px">${ativos().length} de ${lim>=999?'∞':lim} liderados ativos${ACESSO_LIVRE?' (acesso de teste, sem limite)':' no plano '+esc(S.plano)}. Sem rankings ou perfis psicológicos: só registros profissionais.</p>`,
  after(){const q=$('#tq');q.oninput=()=>{teamQ=q.value;const p=q.selectionStart;render();const n=$('#tq');n.focus();n.setSelectionRange(p,p)}}}};
 A.teamF=d=>{teamF=d.f;render()};
 V.lidEdit=p=>{const l=S.lid.find(x=>x.id===p.id)||{status:'ativo',comp:[]};return {t:p.id?'Editar liderado':'Novo liderado',h:`
@@ -824,7 +829,7 @@ A.fbCopyE=d=>copy(S.ev.find(x=>x.id===d.id).texto);
 const CH=()=>soRH()?(S.chatRH=S.chatRH||[]):S.chat;const setCH=v=>{if(soRH())S.chatRH=v;else S.chat=v};
 /* ---------- mentor ---------- */
 let mentorCtx='',mentorAuth=false,mentorBusy=false;
-V.mentor=()=>{const lim=S.plano==='Gratuito'?10:null,rhm=soRH();return {t:rhm?'Mentor de Seleção':'Prumo Mentor',act:`<button class="ib" data-a="mentorLimpar" aria-label="Nova conversa">${ic('refresh')}</button>`,h:`
+V.mentor=()=>{const lim=S.plano==='Gratuito'&&!ACESSO_LIVRE?10:null,rhm=soRH();return {t:rhm?'Mentor de Seleção':'Prumo Mentor',act:`<button class="ib" data-a="mentorLimpar" aria-label="Nova conversa">${ic('refresh')}</button>`,h:`
  ${CH().length?'':`<div class="card" style="margin-bottom:14px"><div style="display:flex;gap:12px;align-items:center"><span class="av" style="width:44px;height:44px;background:var(--pet);color:#C4A46B">${ic('mentor')}</span><div><h3>${rhm?'Seu mentor de recrutamento e seleção':'Seu mentor de liderança'}</h3><p class="sm mut">${rhm?'Tire dúvidas sobre critérios, entrevistas, devolutivas técnicas, vieses e LGPD em processos seletivos.':'Conte uma situação. Vou ajudar a entender, levantar hipóteses, riscos e alternativas.'}</p></div></div>
  <div class="chips" style="margin-top:14px">${(soRH()?['Como dar devolutiva técnica a um colaborador interno com muito tempo de casa?','O candidato pediu para saber quem foi aprovado. Como responder?','Como transformar "não tem perfil" em um apontamento técnico?','Como explicar ao gestor por que o colaborador dele não passou?']:['Como lidar com um liderado que sempre se justifica?','Fui promovido e lidero ex-colegas. Por onde começo?','Como delegar sem perder qualidade?','Minha equipe está desmotivada. O que investigar?']).map(q=>`<button class="chip" data-a="mentorQ" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div></div>`}
  ${rhm?'':`<details class="card" style="margin-bottom:12px"><summary style="cursor:pointer;font-weight:600;font-size:14.5px">Contexto de registros ${mentorCtx&&mentorAuth?`<span class="tag o">${esc(lidN(mentorCtx))}</span>`:'<span class="tag">desligado</span>'}</summary>
@@ -841,7 +846,7 @@ let mDict=null;
 A.mentorMic=(d,b)=>{const D=CAP.dict;if(!D)return ditado('m_in');if(mDict){D.stop().catch(()=>{});return}mDict=true;b.style.background='var(--our)';const inp=$('#m_in'),base=inp.value?inp.value+' ':'';let fin='';D.onPartial(({text})=>{inp.value=base+fin+text});D.onFinal(({text})=>{fin+=text+' ';inp.value=base+fin});D.onState(({state})=>{if(state==='idle'){mDict=null;b.style.background='var(--sf2)'}});D.start().catch(e=>{mDict=null;b.style.background='var(--sf2)';toast('Microfone não autorizado.')})};
 function lidContexto(id){const l=S.lid.find(x=>x.id===id);if(!l)return '';const tl=timeline(id).slice(0,12).map(i=>`- ${i.d} [${CATN[i.cat]||i.cat}] ${i.t}${i.s?': '+String(i.s).slice(0,160):''}`).join('\n');return `Liderado: ${l.nome.split(' ')[0]}, ${l.cargo||''}, área ${l.depto||'-'}, na função desde ${l.funcao||'-'}. Competências em foco: ${(l.comp||[]).join(', ')||'-'}. Observações profissionais: ${l.obs||'-'}.\nRegistros recentes:\n${tl||'nenhum'}`}
 A.mentorEnviar=async()=>{if(mentorBusy)return;const inp=$('#m_in'),q=inp.value.trim();if(!q)return;
- if(S.plano==='Gratuito'&&S.uso.mentor>=10)return sheet(`<h3>Limite do plano Gratuito</h3><p class="mut" style="margin:8px 0">Você usou as 10 mensagens do mês.</p><div class="btns"><button class="btn full" data-a="goPlanos">Conhecer o Pro</button></div>`);
+ if(S.plano==='Gratuito'&&!ACESSO_LIVRE&&S.uso.mentor>=10)return sheet(`<h3>Limite do plano Gratuito</h3><p class="mut" style="margin:8px 0">Você usou as 10 mensagens do mês.</p><div class="btns"><button class="btn full" data-a="goPlanos">Conhecer o Pro</button></div>`);
  CH().push({r:'u',t:q});inp.value='';render();mentorBusy=true;
  const c=$('#chat'),div=document.createElement('div');div.className='msg a';div.innerHTML='<span class="spin"></span>';c.appendChild(div);div.scrollIntoView({block:'end'});
  const P=S.perfil,ctx=mentorCtx&&mentorAuth?'\n\nContexto autorizado pelo líder:\n'+lidContexto(mentorCtx):'';
@@ -1052,7 +1057,7 @@ let simCat='Todos';
 V.simula=()=>{const CV=cenAll().filter(c=>c.custom||visivel(c));if(!temRH()&&CAT_RH.includes(simCat))simCat='Todos';const cats=['Todos',...new Set(CV.filter(c=>!c.custom).map(c=>c.cat))],L=CV.filter(c=>simCat==='Todos'||c.cat===simCat||(simCat==='Personalizados'&&c.custom));
  return {t:'Prumo Simula',act:`<button class="ib" data-a="go" data-v="simHist" aria-label="Histórico">${ic('chart')}</button>`,h:`
  <div class="hello" style="padding:16px"><span class="lg">${LOGO}</span><h2 style="font-size:20px">${soRH()?'Treine a devolutiva e a entrevista antes':'Pratique a conversa antes que ela aconteça'}</h2><p class="mut sm" style="margin-top:4px">Chamada de voz com personagens que reagem ao que você diz. Videochamada em breve.</p>
- <div style="display:flex;gap:16px;margin-top:12px;font-size:13.5px"><span>Voz: <b>${Math.max(0,saldo('voz'))} min</b></span><span>Vídeo: <b>em breve</b></span></div></div>
+ <div style="display:flex;gap:16px;margin-top:12px;font-size:13.5px"><span>Voz: <b>${ACESSO_LIVRE?'liberada para teste':Math.max(0,saldo('voz'))+' min'}</b></span><span>Vídeo: <b>em breve</b></span></div></div>
  <div class="sec"><h3>Personagens</h3></div>
  <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory"><button data-a="go" data-v="persEdit" style="flex:none;width:92px;background:none;border:0;color:inherit;font:inherit;cursor:pointer;scroll-snap-align:start;text-align:center"><span style="width:72px;height:72px;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;margin:0 auto;color:var(--pri)">${ic('plus')}</span><b style="display:block;font-size:14px;margin-top:4px">Criar</b><span class="xs mut">personagem</span></button>${allPers().map(p=>`<button data-a="go" data-v="persVer" data-id="${p.id}" style="flex:none;width:92px;background:none;border:0;color:inherit;font:inherit;cursor:pointer;scroll-snap-align:start;text-align:center">${face(p,72)}<b style="display:block;font-size:14px;margin-top:4px">${esc(p.nome)}</b><span class="xs mut">${p.custom?'Seu · ':''}${esc(p.estilo)}</span></button>`).join('')}</div>
  <div class="sec"><h3>Cenários</h3><button class="btn sm gold" data-a="go" data-v="cenCustom">${ic('plus')} Personalizado</button></div>
@@ -1604,7 +1609,7 @@ function sidebar(curV){const tabs=tabsAtuais(),G=menuGroups();const isOn=v=>v===
  <nav>${tabs.filter(t=>t[0]!=='more').map(t=>item(t[2],t[1],'tab',t[0])).join('')}
  ${G.map(g=>`<p class="sgrp">${esc(g[0])}</p>${g[1].filter(x=>!tabs.some(t=>t[0]===x[2])).map(x=>item(x[0],x[1],'side',x[2])).join('')}`).join('')}</nav>
  <div class="sfoot"><div class="seg sseg">${[['lider','Líder'],['rh','RH'],['ambos','Ambos']].map(x=>`<button class="${visaoAtual()===x[0]?'on':''}" data-a="trocaVisao" data-x="${x[0]}">${x[1]}</button>`).join('')}</div>
- <button class="si" data-a="side" data-v="perfil">${avatar(S.perfil.nome||'Eu',28)}<span>${esc(S.perfil.nome||'Seu perfil')}<br><small>${esc(S.perfil.cargo||'')} · ${esc(S.plano)}</small></span></button></div></aside>`}
+ <button class="si" data-a="side" data-v="perfil">${avatar(S.perfil.nome||'Eu',28)}<span>${esc(S.perfil.nome||'Seu perfil')}<br><small>${esc(S.perfil.cargo||'')} · ${esc(nomePlano())}</small></span></button></div></aside>`}
 A.side=d=>{curTab='more';stack=[{v:d.v,p:{}}];render();scrollTo(0,0)};
 
 /* ---------- Conteúdo específico por visão ---------- */
@@ -1983,9 +1988,9 @@ A.repCSV=()=>{const c=chipsVal('rp_campos'),q=s=>`"${String(s??'').replace(/"/g,
 A.repTxt=()=>{const t=document.querySelectorAll('.bars .r');copy(`Relatório Prumo Feedback (${repPer==='todos'?'todo o período':'últimos '+repPer+' dias'})\n`+[...t].map(r=>r.children[0].textContent+': '+r.children[2].textContent).join('\n'))};
 
 /* ---------- Assinatura ---------- */
-V.assinatura=()=>{const P=plano();return {t:'Assinatura e minutos',h:`
+V.assinatura=()=>{const P=planoReal();return {t:'Assinatura e minutos',h:`${ACESSO_LIVRE?`<div class="card" style="border-left:4px solid var(--teal);margin-bottom:12px"><b>Fase de testes: acesso liberado</b><p class="sm mut" style="margin-top:4px">Durante os testes não há limite de liderados, minutos de voz nem mensagens do Mentor. Os planos abaixo já estão prontos e passam a valer no lançamento. A videochamada continua em breve.</p></div>`:''}
  <div class="hello"><span class="lg">${LOGO}</span><p class="mut sm">Seu plano</p><h2>${esc(P.id)}</h2><p class="mut sm">${esc(P.preco)}${P.ano?' · ou '+esc(P.ano):''}</p></div>
- <div class="sec"><h3>Saldo deste mês ${infoBtn('Franquia')}</h3></div><div class="card">${[['Voz','voz',P.voz+S.uso.extraVoz],['Vídeo','video',P.video+S.uso.extraVideo]].map(x=>`<div class="crit"><span>${x[0]}</span><em>${Math.max(0,saldo(x[1]))} de ${x[2]} min</em><div class="prog"><i style="width:${x[2]?Math.max(0,saldo(x[1]))/x[2]*100:0}%"></i></div></div>`).join('')}<p class="xs mut">Usado: ${S.uso.voz} min de voz e ${S.uso.video} min de vídeo. Cada simulação é cobrada uma única vez, arredondada para cima por minuto. Renova no dia 1º.</p></div>
+ <div class="sec"><h3>Saldo deste mês ${infoBtn('Franquia')}</h3></div><div class="card">${[['Voz','voz',P.voz+S.uso.extraVoz],['Vídeo','video',P.video+S.uso.extraVideo]].map(x=>`<div class="crit"><span>${x[0]}</span><em>${ACESSO_LIVRE&&x[1]==='voz'?'liberado no teste':Math.max(0,saldo(x[1]))+' de '+x[2]+' min'}</em><div class="prog"><i style="width:${ACESSO_LIVRE&&x[1]==='voz'?100:(x[2]?Math.max(0,saldo(x[1]))/x[2]*100:0)}%"></i></div></div>`).join('')}<p class="xs mut">Usado: ${S.uso.voz} min de voz e ${S.uso.video} min de vídeo. Cada simulação é cobrada uma única vez, arredondada para cima por minuto. Renova no dia 1º.</p></div>
  <div class="sec"><h3>Pacotes extras</h3></div><div class="list">${[['voz',30,'R$ 14,90'],['voz',100,'R$ 39,90'],['video',15,'R$ 24,90']].map(x=>`<button class="row" data-a="pacote" data-k="${x[0]}" data-n="${x[1]}"><span class="grow"><b style="font-weight:600">+${x[1]} min de ${x[0]==='voz'?'voz':'vídeo'}</b><br><span class="xs mut">Não expiram no mês</span></span><b>${x[2]}</b></button>`).join('')}</div>
  <div class="sec"><h3>Planos</h3></div>${PLANOS.map(p=>`<div class="card" style="${p.id===S.plano?'border-color:var(--pri);box-shadow:inset 0 0 0 1.5px var(--pri)':''}"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h3>${p.id}</h3><b>${p.preco}</b></div>${p.ano?`<p class="xs mut">ou ${p.ano}</p>`:''}<ul class="sm" style="padding-left:18px;margin:8px 0 0;line-height:1.7">${itensPlano(p).map(i=>`<li>${esc(i)}</li>`).join('')}</ul>${p.id===S.plano?'<span class="tag o" style="margin-top:8px">Plano atual</span>':`<button class="btn sm ${p.id==='Premium'?'gold':''}" style="margin-top:10px" data-a="trocaPlano" data-p="${p.id}">Mudar para ${p.id}</button>`}</div>`).join('')}
  <p class="note">Protótipo: as compras acima são simuladas e nada é cobrado. Na versão final, o pagamento será pela App Store, Google Play ou pelo site (Pix e cartão). Valores e franquias ainda em validação.</p>`}};
