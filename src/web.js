@@ -116,7 +116,7 @@ async function liveStart(){
  const reviver=()=>{if(L.closed)return;if(ctxIn.state!=='running')ctxIn.resume().catch(()=>{});const tr=L.stream&&L.stream.getAudioTracks()[0];if(tr&&tr.readyState==='ended'&&!L.reabrindo){L.reabrindo=true;pedirMic().then(r=>{L.reabrindo=false;if(r.stream&&!L.closed){L.stream=r.stream;const s2=ctxIn.createMediaStreamSource(r.stream);s2.connect(L.node)}})}};
  ctxIn.onstatechange=reviver;L.vig=setInterval(reviver,1500);document.addEventListener('visibilitychange',reviver);
  C.connecting=false;C.t0=Date.now();C.timer=setInterval(tick,500);renderCall();
- try{L.session.sendClientContent({turns:[{role:'user',parts:[{text:C.cen.inv?'(O candidato acabou de entrar na chamada. Cumprimente, agradeça a participação, explique o objetivo da conversa em 1 ou 2 frases e pergunte se ele pode falar agora.)':'('+(ehRH(C.cen)?'A pessoa do RH':'O líder')+' acabou de entrar na chamada. Cumprimente de forma breve, no seu estilo, e aguarde ele falar.)'}]}],turnComplete:true})}catch(e){}
+ try{L.session.sendClientContent({turns:[{role:'user',parts:[{text:C.cen.inv?(C.cen.invTipo==='lider'?'(A pessoa da sua equipe acabou de entrar na conversa. Cumprimente pelo nome, diga o propósito com cuidado em 1 ou 2 frases e pergunte se é um bom momento.)':'(O candidato acabou de entrar na chamada. Cumprimente, agradeça a participação, explique o objetivo da conversa em 1 ou 2 frases e pergunte se ele pode falar agora.)'):'('+(ehRH(C.cen)?'A pessoa do RH':'O líder')+' acabou de entrar na chamada. Cumprimente de forma breve, no seu estilo, e aguarde ele falar.)'}]}],turnComplete:true})}catch(e){}
 }
 A.simTexto=()=>{closeSheet();_simStartCascata()};
 const _simStartCascata=A.simStart;
@@ -147,3 +147,11 @@ async function webBoot(){
 }
 try{speechSynthesis.getVoices()}catch(e){}
 webBoot();
+
+/* ---- instalar o site como app (ícone na tela inicial) ---- */
+let INSTALAR=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALAR=e});
+const instalado=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+A.instalar=async()=>{if(INSTALAR){INSTALAR.prompt();try{await INSTALAR.userChoice}catch(e){}INSTALAR=null;return}
+ const ios=/iPhone|iPad|iPod/.test(navigator.userAgent),crios=/CriOS/.test(navigator.userAgent);
+ sheet(`<h3>Adicionar à tela inicial</h3><ol class="sm" style="margin:10px 0;padding-left:18px;line-height:1.8">${ios?`<li>Toque em <b>Compartilhar</b> ${crios?'(no Chrome, fica na barra de endereço)':'(o quadrado com a seta, na barra de baixo)'}.</li><li>Escolha <b>Adicionar à Tela de Início</b>.</li><li>Toque em <b>Adicionar</b>. O Prumo Feedback abre em tela cheia, como um app.</li>`:`<li>Abra o menu do navegador (⋮).</li><li>Escolha <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</li><li>Confirme. O ícone aparece junto dos seus apps.</li>`}</ol><p class="xs mut">No computador, use o ícone de instalar na barra de endereço do Chrome ou do Edge.</p><button class="btn full" style="margin-top:10px" data-a="closeSheet">Entendi</button>`)};
+{const _m=V.more;V.more=p=>{const r=_m(p);if(!instalado())r.h=`<button class="row" style="margin-bottom:12px;border-color:color-mix(in srgb,var(--plum) 35%,var(--line))" data-a="instalar"><span class="mpl" style="width:40px;height:40px;font-size:18px">P</span><span class="grow"><b style="font-weight:600">Adicionar à tela inicial</b><br><span class="sm mut">Abra o Prumo Feedback como um app, em tela cheia.</span></span>${ic('chev')}</button>`+r.h;return r}}

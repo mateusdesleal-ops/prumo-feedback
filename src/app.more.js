@@ -41,7 +41,7 @@ V.ferr=p=>{const f=FERR.find(x=>x.n===p.n),hist=S.ferr.filter(x=>x.n===f.n).reve
  ${f.campos.map((c,i)=>`<label class="f">${esc(c)}<textarea id="fr_${i}" style="min-height:64px">${esc(ed?ed.dados[i]||'':'')}</textarea></label>`).join('')}
  <div id="frSug"></div>
  <div class="btns"><button class="btn" style="flex:1" data-a="ferrSalvar" data-n="${esc(f.n)}" data-id="${ed?ed.id:''}">Salvar</button><button class="btn ghost" data-a="ferrCopy" data-n="${esc(f.n)}">${ic('copy')} Copiar</button></div>
- <p class="note">Exportação em PDF disponível na versão das lojas.</p>
+ 
  ${hist.length?`<div class="sec"><h3>Histórico</h3></div><div class="list">${hist.map(h=>`<button class="row" data-a="go" data-v="ferr" data-n="${esc(f.n)}" data-edit="${h.id}"><span class="grow">${esc(h.tit||'Sem título')}<br><span class="xs mut">${esc(fd(h.data))}</span></span>${ic('edit')}</button>`).join('')}</div>`:''}`}};
 const ferrTexto=f=>`${f.n}${val('fr_tit')?' · '+val('fr_tit'):''}\n\n`+f.campos.map((c,i)=>`${c}:\n${val('fr_'+i)||'—'}`).join('\n\n');
 A.ferrSalvar=d=>{const f=FERR.find(x=>x.n===d.n),o={n:f.n,tit:val('fr_tit'),dados:f.campos.map((_,i)=>val('fr_'+i)),data:hoje()};if(d.id)Object.assign(S.ferr.find(x=>x.id===d.id),o);else S.ferr.push({id:nid(),...o});save();toast('Salvo no histórico');render()};
@@ -80,7 +80,7 @@ V.relatorios=()=>{if(soRH())return relRH();const t=hoje(),inP=d=>d&&(repPer==='t
  <div class="sec"><h3>Exportar</h3></div>
  <p class="sm mut" style="margin-bottom:8px">Escolha os campos a incluir:</p>${chips('rp_campos',['Feedbacks','Reuniões','Reconhecimentos','Compromissos','PDIs','Metas','Simulações'],['Feedbacks','Reuniões','Compromissos'])}
  <div class="btns"><button class="btn" data-a="repCSV">${ic('copy')} Copiar CSV</button><button class="btn ghost" data-a="repTxt">${ic('copy')} Copiar resumo</button></div>
- <p class="note">Exportação em PDF e compartilhamento direto ficarão disponíveis no app das lojas. Compartilhe apenas o necessário e com autorização.</p>`,
+ <button class="btn line full" style="margin-top:8px" data-a="pdfTela" data-t="Relatório">${ic('copy')} Exportar relatório em PDF</button><p class="note">Compartilhe apenas o necessário e com autorização.</p>`,
  after(){$('#rp_per').onchange=e=>{repPer=e.target.value;render()};$('#rp_lid').onchange=e=>{repLid=e.target.value;render()}}}};
 A.repCSV=()=>{const c=chipsVal('rp_campos'),q=s=>`"${String(s??'').replace(/"/g,'""')}"`,L=[['categoria','data','liderado','titulo','status'].join(';')];
  if(c.includes('Feedbacks'))S.ev.filter(e=>e.tipo==='feedback').forEach(e=>L.push(['Feedback',e.data,lidN(e.lid),e.titulo,e.status].map(q).join(';')));
@@ -99,7 +99,7 @@ V.assinatura=()=>{const P=planoReal();return {t:'Assinatura e minutos',h:`${ACES
  <div class="sec"><h3>Saldo deste mês ${infoBtn('Franquia')}</h3></div><div class="card">${[['Voz','voz',P.voz+S.uso.extraVoz],['Vídeo','video',P.video+S.uso.extraVideo]].map(x=>`<div class="crit"><span>${x[0]}</span><em>${ACESSO_LIVRE&&x[1]==='voz'?'liberado no teste':Math.max(0,saldo(x[1]))+' de '+x[2]+' min'}</em><div class="prog"><i style="width:${ACESSO_LIVRE&&x[1]==='voz'?100:(x[2]?Math.max(0,saldo(x[1]))/x[2]*100:0)}%"></i></div></div>`).join('')}<p class="xs mut">Usado: ${S.uso.voz} min de voz e ${S.uso.video} min de vídeo. Cada simulação é cobrada uma única vez, arredondada para cima por minuto. Renova no dia 1º.</p></div>
  <div class="sec"><h3>Pacotes extras</h3></div><div class="list">${[['voz',30,'R$ 14,90'],['voz',100,'R$ 39,90'],['video',15,'R$ 24,90']].map(x=>`<button class="row" data-a="pacote" data-k="${x[0]}" data-n="${x[1]}"><span class="grow"><b style="font-weight:600">+${x[1]} min de ${x[0]==='voz'?'voz':'vídeo'}</b><br><span class="xs mut">Não expiram no mês</span></span><b>${x[2]}</b></button>`).join('')}</div>
  <div class="sec"><h3>Planos</h3></div>${PLANOS.map(p=>`<div class="card" style="${p.id===S.plano?'border-color:var(--pri);box-shadow:inset 0 0 0 1.5px var(--pri)':''}"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h3>${p.id}</h3><b>${p.preco}</b></div>${p.ano?`<p class="xs mut">ou ${p.ano}</p>`:''}<ul class="sm" style="padding-left:18px;margin:8px 0 0;line-height:1.7">${itensPlano(p).map(i=>`<li>${esc(i)}</li>`).join('')}</ul>${p.id===S.plano?'<span class="tag o" style="margin-top:8px">Plano atual</span>':`<button class="btn sm ${p.id==='Premium'?'gold':''}" style="margin-top:10px" data-a="trocaPlano" data-p="${p.id}">Mudar para ${p.id}</button>`}</div>`).join('')}
- <p class="note">Protótipo: as compras acima são simuladas e nada é cobrado. Na versão final, o pagamento será pela App Store, Google Play ou pelo site (Pix e cartão). Valores e franquias ainda em validação.</p>`}};
+ <p class="note">Protótipo: as compras acima são simuladas e nada é cobrado. No lançamento, o pagamento será pelo site (Pix e cartão). Valores e franquias ainda em validação.</p>`}};
 A.pacote=d=>{const k=d.k==='voz'?'extraVoz':'extraVideo';S.uso[k]+=+d.n;save();toast(`+${d.n} min adicionados (simulação)`);render()};
 A.trocaPlano=d=>{S.plano=d.p;save();toast('Plano alterado para '+d.p+' (simulação)');render()};
 
