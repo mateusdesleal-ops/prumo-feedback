@@ -631,7 +631,7 @@ const VOZ={busy:false};
 function ptVoice(g){try{const vs=speechSynthesis.getVoices().filter(v=>/pt[-_]BR/i.test(v.lang));if(!vs.length)return null;const fem=/luciana|francisca|maria|female|feminina|vitoria|thalita|helena/i,m=vs.filter(v=>g==='f'?fem.test(v.name):!fem.test(v.name));return (m[0]||vs[0])}catch(e){return null}}
 function canSpeak(){return !!(CAP.tts||('speechSynthesis' in window))}
 function speakText(text,pers,onState){
- if(CAP.tts){const o={language:'pt-BR'};if(pers){o.voice=pers.voz;o.rate=pers.rate}return CAP.tts.speak(text,o).catch(()=>{})}
+ if(CAP.tts){const o={language:'pt-BR',pers,onState};if(pers){o.voice=pers.voz;o.rate=pers.rate}return CAP.tts.speak(text,o).catch(()=>{})}
  return new Promise(res=>{try{const u=new SpeechSynthesisUtterance(text);u.lang='pt-BR';const v=ptVoice(pers?pers.g:'f');if(v)u.voice=v;if(pers){u.pitch=pers.pitch;u.rate=pers.rate}u.onstart=()=>onState&&onState('speaking');u.onend=u.onerror=()=>{onState&&onState('idle');res()};speechSynthesis.speak(u)}catch(e){res()}})}
 function stopSpeak(){try{CAP.tts&&CAP.tts.stop()}catch(e){}try{speechSynthesis.cancel()}catch(e){}}
 
@@ -1118,7 +1118,7 @@ function setCallState(s){if(!CALL)return;CALL.state=s;renderCall()}
 async function personagemFala(t){if(!CALL)return;CALL.turns.push({w:'p',t,ts:CALL.elapsed});if(CALL.muted||!canSpeak()){setCallState('idle');return}
  setCallState('speaking');try{await speakText(t,CALL.pers,s=>{if(CALL&&s==='idle'&&CALL.state==='speaking')setCallState('idle')})}catch(e){}if(CALL&&CALL.state==='speaking')setCallState('idle')}
 function simPrompt(){const C=CALL,p=C.pers,c=C.cen;const tr=C.turns.map(t=>(t.w==='u'?'LÍDER: ':p.nome.toUpperCase()+': ')+t.t).join('\n');
- return `Você está interpretando um personagem FICTÍCIO em um treino de liderança por voz. Nunca saia do papel, nunca diga que é uma IA e nunca avalie o líder durante a conversa.\nPersonagem: ${p.nome}, ${p.idade} anos, ${p.cargo}. Estilo: ${p.estilo}. ${p.desc}\nCenário: ${c.titulo}. ${c.contexto}\nO que você pensa e sente: ${c.papel}\nDificuldade (${C.nivel.nome}): ${C.nivel.prompt}\nRegras de fala: responda em português do Brasil coloquial e natural, como numa conversa falada; 1 a 3 frases curtas; sem listas, emojis, aspas ou descrições de ações; reaja ao que o líder acabou de dizer; mude de postura gradualmente conforme a qualidade da escuta e da clareza do líder. Se o líder for desrespeitoso, reaja como uma pessoa real reagiria, sem agressividade. Se houver um acordo claro com próximos passos e o líder encerrar, despeça-se e escreva [FIM] no final.\n\nConversa até agora:\n${tr}\n\n${p.nome.toUpperCase()}:`}
+ return `Você está interpretando um personagem FICTÍCIO em um treino de liderança por voz. Nunca saia do papel, nunca diga que é uma IA e nunca avalie o líder durante a conversa.\nPersonagem: ${p.nome}, ${p.idade} anos, ${p.cargo}. Estilo: ${p.estilo}. ${p.desc}\nCenário: ${c.titulo}. ${c.contexto}\nO que você pensa e sente: ${c.papel}\nDificuldade (${C.nivel.nome}): ${C.nivel.prompt}\nRegras de fala: responda em português do Brasil coloquial e natural, como numa conversa falada, com contrações (tá, pra, né, tô) e uma hesitação curta ocasional (é..., olha...); 1 a 3 frases curtas; sem listas, emojis, aspas ou descrições de ações; reaja ao que o líder acabou de dizer; mude de postura gradualmente conforme a qualidade da escuta e da clareza do líder. Se o líder for desrespeitoso, reaja como uma pessoa real reagiria, sem agressividade. Se houver um acordo claro com próximos passos e o líder encerrar, despeça-se e escreva [FIM] no final.\n\nConversa até agora:\n${tr}\n\n${p.nome.toUpperCase()}:`}
 async function liderFala(t){const C=CALL;if(!C||!t.trim())return;stopSpeak();C.turns.push({w:'u',t:t.trim(),ts:C.elapsed});C.buf='';C.busy=true;setCallState('idle');
  let reply='';
  if(CAP.sample){try{reply=(await ai(simPrompt(),{tier:'quick'})).trim()}catch(e){if(e&&e.code==='rate_limited'){toast('Aguarde um instante…')}}}
@@ -1934,9 +1934,26 @@ Personagem: ${p.nome}, ${p.idade} anos, ${p.cargo}. Estilo: ${p.estilo}. ${p.des
 Cenário: ${c.titulo}. ${c.contexto}
 O que você pensa e sente: ${c.papel}
 Dificuldade (${C.nivel.nome}): ${C.nivel.prompt}
-Regras: respostas curtas (1 a 3 frases), reaja ao que o líder acabou de dizer, mude de postura gradualmente conforme a escuta e a clareza dele. Se ele for desrespeitoso, reaja como uma pessoa real, sem agressividade. Se houver um acordo claro com próximos passos e o líder encerrar, despeça-se.`}
+Jeito de falar: como uma pessoa real ao telefone, nunca como texto lido. Use contrações faladas (tá, pra, né, tô), pausas naturais e, de vez em quando, hesitações curtas (é..., olha..., hum). Varie a entonação conforme a emoção do momento. Regras: respostas curtas (1 a 3 frases), reaja ao que o líder acabou de dizer, mude de postura gradualmente conforme a escuta e a clareza dele. Se ele for desrespeitoso, reaja como uma pessoa real, sem agressividade. Se houver um acordo claro com próximos passos e o líder encerrar, despeça-se.`}
 const b64=buf=>{let s='';const u=new Uint8Array(buf);for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)};
 const WORKLET=`class P extends AudioWorkletProcessor{constructor(){super();this.b=[];this.n=0}process(i){const c=i[0]&&i[0][0];if(c){this.b.push(new Float32Array(c));this.n+=c.length;if(this.n>=2048){const o=new Float32Array(this.n);let k=0;for(const x of this.b){o.set(x,k);k+=x.length}this.port.postMessage(o,[o.buffer]);this.b=[];this.n=0}}return true}}registerProcessor('cap',P)`;
+
+/* ---- voz natural (Gemini TTS no servidor), com a voz do navegador como reserva ---- */
+let AUDCTX=null;const audCtx=()=>{if(!AUDCTX)AUDCTX=new (window.AudioContext||window.webkitAudioContext)();if(AUDCTX.state==='suspended')AUDCTX.resume();return AUDCTX};
+['pointerdown','touchend','keydown'].forEach(ev=>document.addEventListener(ev,()=>{try{audCtx()}catch(e){}},{passive:true}));
+const ESTILO_VOZ={Questionador:'num tom curioso e um pouco desafiador',Reservada:'num tom baixo, contido e hesitante',Defensivo:'num tom firme e um pouco na defensiva',Ansiosa:'num tom ansioso e acelerado',Desmotivado:'num tom cansado e desanimado',Colaborativa:'num tom simpático e aberto'};
+function makeTTS(){let fonte=null,tok=0,falhas=0;
+ const browser=(text,o)=>new Promise(res=>{try{const u=new SpeechSynthesisUtterance(text);u.lang='pt-BR';const p=o.pers;const v=ptVoice(p?p.g:'f');if(v)u.voice=v;if(p){u.pitch=p.pitch;u.rate=p.rate}u.onstart=()=>o.onState&&o.onState('speaking');u.onend=u.onerror=()=>{o.onState&&o.onState('idle');res()};speechSynthesis.speak(u)}catch(e){res()}});
+ return{async speak(text,o={}){const meu=++tok;const p=o.pers;
+  if(falhas<3){try{const voz=p?(p.vozG||VOZ_GEMINI[p.id]||(p.g==='f'?'Kore':'Puck')):'Kore';
+    const d=await callFn('tts',{text:String(text).slice(0,1200),voice:voz,style:p?(ESTILO_VOZ[p.estilo]||''):'em tom calmo e profissional'});
+    if(meu!==tok)return;const ctx=audCtx(),rate=parseInt((/rate=(\d+)/.exec(d.mime||'')||[])[1]||'24000'),bin=atob(d.audio),n=bin.length>>1,f=new Float32Array(n);
+    for(let i=0;i<n;i++){let v=bin.charCodeAt(2*i)|(bin.charCodeAt(2*i+1)<<8);if(v>=32768)v-=65536;f[i]=v/32768}
+    const buf=ctx.createBuffer(1,n,rate);buf.copyToChannel(f,0);falhas=0;
+    return await new Promise(res=>{const s=ctx.createBufferSource();s.buffer=buf;s.connect(ctx.destination);fonte=s;s.onended=()=>{if(fonte===s)fonte=null;o.onState&&o.onState('idle');res()};o.onState&&o.onState('speaking');s.start()})}
+   catch(e){falhas++;if(meu!==tok)return}}
+  return browser(text,o)},
+  stop(){tok++;try{fonte&&fonte.stop()}catch(e){}fonte=null;try{speechSynthesis.cancel()}catch(e){}}}}
 let MIC_PRE=null;
 const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent),CRIOS=/CriOS/.test(navigator.userAgent);
 async function pedirMic(){if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return{erro:'Este navegador não oferece acesso ao microfone. Use o modo alternativo ou abra no Safari/Chrome atualizado.'};
@@ -2002,7 +2019,7 @@ async function webBoot(){
  const go=async session=>{
   if(!session){USER=null;S=null;$('#app').innerHTML=authView();return}
   if(USER&&USER.id===session.user.id)return;USER=session.user;
-  CAP.sample=makeSample();CAP.dict=makeDict();CAP.tts=null;CAP.db=dbShim;CAP.uid=USER.id;
+  CAP.sample=makeSample();CAP.dict=makeDict();CAP.tts=makeTTS();CAP.db=dbShim;CAP.uid=USER.id;
   let local=null;try{local=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
   if(local&&local.owner&&local.owner!==USER.id)local=null;
   S=local?migrate(local):blank();S.owner=USER.id;aplicarVisaoHash();applyTheme();render();

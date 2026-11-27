@@ -101,7 +101,7 @@ const VOZ={busy:false};
 function ptVoice(g){try{const vs=speechSynthesis.getVoices().filter(v=>/pt[-_]BR/i.test(v.lang));if(!vs.length)return null;const fem=/luciana|francisca|maria|female|feminina|vitoria|thalita|helena/i,m=vs.filter(v=>g==='f'?fem.test(v.name):!fem.test(v.name));return (m[0]||vs[0])}catch(e){return null}}
 function canSpeak(){return !!(CAP.tts||('speechSynthesis' in window))}
 function speakText(text,pers,onState){
- if(CAP.tts){const o={language:'pt-BR'};if(pers){o.voice=pers.voz;o.rate=pers.rate}return CAP.tts.speak(text,o).catch(()=>{})}
+ if(CAP.tts){const o={language:'pt-BR',pers,onState};if(pers){o.voice=pers.voz;o.rate=pers.rate}return CAP.tts.speak(text,o).catch(()=>{})}
  return new Promise(res=>{try{const u=new SpeechSynthesisUtterance(text);u.lang='pt-BR';const v=ptVoice(pers?pers.g:'f');if(v)u.voice=v;if(pers){u.pitch=pers.pitch;u.rate=pers.rate}u.onstart=()=>onState&&onState('speaking');u.onend=u.onerror=()=>{onState&&onState('idle');res()};speechSynthesis.speak(u)}catch(e){res()}})}
 function stopSpeak(){try{CAP.tts&&CAP.tts.stop()}catch(e){}try{speechSynthesis.cancel()}catch(e){}}
 
