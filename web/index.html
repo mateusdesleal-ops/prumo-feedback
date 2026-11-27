@@ -1117,8 +1117,9 @@ function renderCall(){let el=$('#call');if(!el){el=document.createElement('div')
 function setCallState(s){if(!CALL)return;CALL.state=s;renderCall()}
 async function personagemFala(t){if(!CALL)return;CALL.turns.push({w:'p',t,ts:CALL.elapsed});if(CALL.muted||!canSpeak()){setCallState('idle');return}
  setCallState('speaking');try{await speakText(t,CALL.pers,s=>{if(CALL&&s==='idle'&&CALL.state==='speaking')setCallState('idle')})}catch(e){}if(CALL&&CALL.state==='speaking')setCallState('idle')}
-function simPrompt(){const C=CALL,p=C.pers,c=C.cen;const tr=C.turns.map(t=>(t.w==='u'?'LÍDER: ':p.nome.toUpperCase()+': ')+t.t).join('\n');
- return `Você está interpretando um personagem FICTÍCIO em um treino de liderança por voz. Nunca saia do papel, nunca diga que é uma IA e nunca avalie o líder durante a conversa.\nPersonagem: ${p.nome}, ${p.idade} anos, ${p.cargo}. Estilo: ${p.estilo}. ${p.desc}\nCenário: ${c.titulo}. ${c.contexto}\nO que você pensa e sente: ${c.papel}\nDificuldade (${C.nivel.nome}): ${C.nivel.prompt}\nRegras de fala: responda em português do Brasil coloquial e natural, como numa conversa falada, com contrações (tá, pra, né, tô) e uma hesitação curta ocasional (é..., olha...); 1 a 3 frases curtas; sem listas, emojis, aspas ou descrições de ações; reaja ao que o líder acabou de dizer; mude de postura gradualmente conforme a qualidade da escuta e da clareza do líder. Se o líder for desrespeitoso, reaja como uma pessoa real reagiria, sem agressividade. Se houver um acordo claro com próximos passos e o líder encerrar, despeça-se e escreva [FIM] no final.\n\nConversa até agora:\n${tr}\n\n${p.nome.toUpperCase()}:`}
+const ehRH=c=>!!c&&(c.cat==='Devolutiva'||c.p==='rh'||/^(dv|rh)-/.test(c.id||''));
+function simPrompt(){const C=CALL,p=C.pers,c=C.cen,QU=ehRH(c)?'RECRUTADOR(A)':'LÍDER';const tr=C.turns.map(t=>(t.w==='u'?QU+': ':p.nome.toUpperCase()+': ')+t.t).join('\n');
+ return `Você está interpretando um personagem FICTÍCIO em um treino ${ehRH(c)?'de devolutiva em seleção':'de liderança'} por voz. Quem fala com você é ${ehRH(c)?'o(a) recrutador(a) ou psicólogo(a) de seleção':'o líder'}. Nunca saia do papel, nunca diga que é uma IA e nunca avalie quem está treinando durante a conversa.\nPersonagem: ${p.nome}, ${p.idade} anos, ${p.cargo}. Estilo: ${p.estilo}. ${p.desc}\nCenário: ${c.titulo}. ${c.contexto}\nO que você pensa e sente: ${c.papel}\nDificuldade (${C.nivel.nome}): ${C.nivel.prompt}\nRegras de fala: responda em português do Brasil coloquial e natural, como numa conversa falada, com contrações (tá, pra, né, tô) e uma hesitação curta ocasional (é..., olha...); 1 a 3 frases curtas; sem listas, emojis, aspas ou descrições de ações; reaja ao que o líder acabou de dizer; mude de postura gradualmente conforme a qualidade da escuta e da clareza do líder. Se o líder for desrespeitoso, reaja como uma pessoa real reagiria, sem agressividade. Se houver um acordo claro com próximos passos e o líder encerrar, despeça-se e escreva [FIM] no final.\n\nConversa até agora:\n${tr}\n\n${p.nome.toUpperCase()}:`}
 async function liderFala(t){const C=CALL;if(!C||!t.trim())return;stopSpeak();C.turns.push({w:'u',t:t.trim(),ts:C.elapsed});C.buf='';C.busy=true;setCallState('idle');
  let reply='';
  if(CAP.sample){try{reply=(await ai(simPrompt(),{tier:'quick'})).trim()}catch(e){if(e&&e.code==='rate_limited'){toast('Aguarde um instante…')}}}
@@ -1929,12 +1930,12 @@ const _moreV=V.more;V.more=()=>{const r=_moreV();r.h+=`<button class="btn line f
 
 /* ---- chamada de voz em tempo real (Gemini Live) ---- */
 const VOZ_GEMINI={lucas:'Puck',mariana:'Aoede',rafael:'Charon',camila:'Leda',andre:'Fenrir',fernanda:'Kore'};
-function livePrompt(C){const p=C.pers,c=C.cen;return `Você está interpretando um personagem FICTÍCIO numa chamada de voz de treino de liderança. Fale sempre em português do Brasil, com sotaque e ritmo naturais de uma conversa telefônica. Nunca saia do papel, nunca diga que é uma IA e nunca avalie o líder durante a conversa.
+function livePrompt(C){const p=C.pers,c=C.cen,quem=ehRH(c)?'o(a) recrutador(a) ou psicólogo(a) de seleção':'o líder';return `Você está interpretando um personagem FICTÍCIO numa chamada de voz de treino ${ehRH(c)?'de devolutiva em seleção':'de liderança'}. Quem fala com você é ${quem}. Fale sempre em português do Brasil, com sotaque e ritmo naturais de uma conversa telefônica. Nunca saia do papel, nunca diga que é uma IA e nunca avalie quem está treinando durante a conversa.
 Personagem: ${p.nome}, ${p.idade} anos, ${p.cargo}. Estilo: ${p.estilo}. ${p.desc}
 Cenário: ${c.titulo}. ${c.contexto}
 O que você pensa e sente: ${c.papel}
 Dificuldade (${C.nivel.nome}): ${C.nivel.prompt}
-Jeito de falar: como uma pessoa real ao telefone, nunca como texto lido. Use contrações faladas (tá, pra, né, tô), pausas naturais e, de vez em quando, hesitações curtas (é..., olha..., hum). Varie a entonação conforme a emoção do momento. Regras: respostas curtas (1 a 3 frases), reaja ao que o líder acabou de dizer, mude de postura gradualmente conforme a escuta e a clareza dele. Se ele for desrespeitoso, reaja como uma pessoa real, sem agressividade. Se houver um acordo claro com próximos passos e o líder encerrar, despeça-se.`}
+Jeito de falar: como uma pessoa real ao telefone, nunca como texto lido. Use contrações faladas (tá, pra, né, tô), pausas naturais e, de vez em quando, hesitações curtas (é..., olha..., hum). Varie a entonação conforme a emoção do momento. Regras: respostas curtas (1 a 3 frases), reaja ao que o líder acabou de dizer, mude de postura gradualmente conforme a escuta e a clareza da outra pessoa. Se ela for desrespeitosa, reaja como uma pessoa real, sem agressividade. Se houver um acordo claro com próximos passos e a outra pessoa encerrar, despeça-se. Se ficar um silêncio longo, retome com uma frase curta no seu estilo.`}
 const b64=buf=>{let s='';const u=new Uint8Array(buf);for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)};
 const WORKLET=`class P extends AudioWorkletProcessor{constructor(){super();this.b=[];this.n=0}process(i){const c=i[0]&&i[0][0];if(c){this.b.push(new Float32Array(c));this.n+=c.length;if(this.n>=2048){const o=new Float32Array(this.n);let k=0;for(const x of this.b){o.set(x,k);k+=x.length}this.port.postMessage(o,[o.buffer]);this.b=[];this.n=0}}return true}}registerProcessor('cap',P)`;
 
@@ -1966,13 +1967,13 @@ async function pedirMic(){if(!navigator.mediaDevices||!navigator.mediaDevices.ge
 async function liveStart(){
  const c=cenBy(SC.cen),p=persBy(SC.pers);SC.modo='voz';
  if(saldo('voz')<1)return sheet(`<h3>Sem minutos disponíveis</h3><p class="mut" style="margin:8px 0">Seu saldo de voz acabou neste mês.</p><div class="btns"><button class="btn full" data-a="goPlanos">Ver opções</button></div>`);
- const ctxIn=new (window.AudioContext||window.webkitAudioContext)(),ctxOut=new (window.AudioContext||window.webkitAudioContext)({sampleRate:24000});
- ctxIn.resume();ctxOut.resume();
+ const ctxIn=new (window.AudioContext||window.webkitAudioContext)(),ctxOut=ctxIn;/* um único contexto: no iPhone dois contextos com taxas diferentes derrubam o microfone */
+ ctxIn.resume();
  const max=Math.min(SC.dur*60,saldo('voz')*60);
  CALL={cen:c,pers:p,nivel:NIVEIS.find(n=>n.id===SC.nivel),modo:'voz',max,turns:[],t0:Date.now(),elapsed:0,paused:false,muted:false,cc:true,kb:false,state:'idle',busy:false,timer:null,dict:null,buf:'',silT:null,fimSug:false,charged:false,connecting:true};
  const C=CALL;renderCall();
  const L={muted:false,session:null,stream:null,node:null,sources:[],next:0,gain:ctxOut.createGain(),closed:false,sid:null};L.gain.connect(ctxOut.destination);C.live=L;
- const falhar=msg=>{L.closed=true;try{L.session&&L.session.close()}catch(e){}try{L.stream&&L.stream.getTracks().forEach(t=>t.stop())}catch(e){}ctxIn.close();ctxOut.close();clearInterval(C.timer);CALL=null;const el=$('#call');if(el)el.remove();
+ const falhar=msg=>{L.closed=true;try{L.session&&L.session.close()}catch(e){}try{L.stream&&L.stream.getTracks().forEach(t=>t.stop())}catch(e){}try{ctxIn.close()}catch(e){}clearInterval(C.timer);CALL=null;const el=$('#call');if(el)el.remove();
   sheet(`<h3>Não foi possível iniciar a chamada em tempo real</h3><p class="mut" style="margin:8px 0">${esc(msg)}</p><div class="btns"><button class="btn line" data-a="closeSheet">Fechar</button><button class="btn" style="flex:1" data-a="simTexto">Usar modo alternativo</button></div>`)};
  if(MIC_PRE){L.stream=MIC_PRE;MIC_PRE=null}else{const r=await pedirMic();if(r.erro)return falhar(r.erro);L.stream=r.stream}
  let tk;try{tk=await callFn('live-token',{scenario:c.id})}catch(e){return falhar(e.message)}
@@ -1994,12 +1995,14 @@ async function liveStart(){
    if(sc.turnComplete){const lp=C.turns[C.turns.length-1];if(lp)lp.done=true}}}});
  try{L.session=await conectar(config)}catch(e){try{delete config.speechConfig;L.session=await conectar(config)}catch(e2){return falhar('O serviço de voz recusou a conexão. Confira a chave do Gemini e o nome do modelo de voz.')}}
  // microfone → PCM 16 kHz
- try{const url=URL.createObjectURL(new Blob([WORKLET],{type:'application/javascript'}));await ctxIn.audioWorklet.addModule(url);const src=ctxIn.createMediaStreamSource(L.stream);L.node=new AudioWorkletNode(ctxIn,'cap');src.connect(L.node);
+ try{const url=URL.createObjectURL(new Blob([WORKLET],{type:'application/javascript'}));await ctxIn.audioWorklet.addModule(url);const src=ctxIn.createMediaStreamSource(L.stream);L.node=new AudioWorkletNode(ctxIn,'cap');src.connect(L.node);const mudo=ctxIn.createGain();mudo.gain.value=0;L.node.connect(mudo);mudo.connect(ctxIn.destination);/* sem saída o Safari para de processar */
   const ratio=ctxIn.sampleRate/16000;L.node.port.onmessage=e=>{if(L.muted||C.paused||L.closed)return;const f=e.data,n=Math.floor(f.length/ratio),o=new Int16Array(n);for(let i=0;i<n;i++){const v=Math.max(-1,Math.min(1,f[Math.floor(i*ratio)]));o[i]=v<0?v*32768:v*32767}try{L.session.sendRealtimeInput({audio:{data:b64(o.buffer),mimeType:'audio/pcm;rate=16000'}})}catch(err){}}}
  catch(e){return falhar('Este navegador não permitiu capturar o áudio do microfone.')}
- L.cleanup=dur=>{L.closed=true;stopPlayback();try{L.session.close()}catch(e){}try{L.stream.getTracks().forEach(t=>t.stop())}catch(e){}try{ctxIn.close();ctxOut.close()}catch(e){}if(L.sid)callFn('live-token',{action:'end',session_id:L.sid,seconds:dur}).catch(()=>{});C.turns=C.turns.filter(t=>t.t&&t.t.trim()).map(t=>({w:t.w,t:t.t.trim(),ts:t.ts}))};
+ L.cleanup=dur=>{L.closed=true;clearInterval(L.vig);stopPlayback();try{L.session.close()}catch(e){}try{L.stream.getTracks().forEach(t=>t.stop())}catch(e){}try{ctxIn.close()}catch(e){}if(L.sid)callFn('live-token',{action:'end',session_id:L.sid,seconds:dur}).catch(()=>{});C.turns=C.turns.filter(t=>t.t&&t.t.trim()).map(t=>({w:t.w,t:t.t.trim(),ts:t.ts}))};
+ const reviver=()=>{if(L.closed)return;if(ctxIn.state!=='running')ctxIn.resume().catch(()=>{});const tr=L.stream&&L.stream.getAudioTracks()[0];if(tr&&tr.readyState==='ended'&&!L.reabrindo){L.reabrindo=true;pedirMic().then(r=>{L.reabrindo=false;if(r.stream&&!L.closed){L.stream=r.stream;const s2=ctxIn.createMediaStreamSource(r.stream);s2.connect(L.node)}})}};
+ ctxIn.onstatechange=reviver;L.vig=setInterval(reviver,1500);document.addEventListener('visibilitychange',reviver);
  C.connecting=false;C.t0=Date.now();C.timer=setInterval(tick,500);renderCall();
- try{L.session.sendClientContent({turns:[{role:'user',parts:[{text:'(O líder acabou de entrar na chamada. Cumprimente de forma breve, no seu estilo, e aguarde ele falar.)'}]}],turnComplete:true})}catch(e){}
+ try{L.session.sendClientContent({turns:[{role:'user',parts:[{text:'('+(ehRH(C.cen)?'A pessoa do RH':'O líder')+' acabou de entrar na chamada. Cumprimente de forma breve, no seu estilo, e aguarde ele falar.)'}]}],turnComplete:true})}catch(e){}
 }
 A.simTexto=()=>{closeSheet();_simStartCascata()};
 const _simStartCascata=A.simStart;
