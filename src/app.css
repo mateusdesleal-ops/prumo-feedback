@@ -424,3 +424,12 @@ nav.tabs .sim svg{background:var(--plum)}
  @page{margin:18mm 16mm}
 }
 .pdoc .pth{color:#4A2D5E}
+/* modo acompanhamento */
+#alvoBar{position:fixed;left:0;right:0;top:0;z-index:60;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 14px;padding-top:calc(8px + env(safe-area-inset-top));background:#E8604C;color:#fff;font-size:13px}
+#alvoBar svg.i{width:15px;height:15px;vertical-align:-3px}
+#alvoBar button{background:#fff;color:#E8604C;border:0;border-radius:8px;padding:6px 10px;font:600 12.5px Inter,sans-serif;cursor:pointer;flex:none}
+body.modo-alvo #app{padding-top:var(--ab,44px)}
+body.modo-alvo header.top{top:var(--ab,44px)}
+#alvoBar small{opacity:.9}
+@media(max-width:420px){#alvoBar small{display:none}}
+@media print{#alvoBar{display:none!important}}

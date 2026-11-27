@@ -14,7 +14,7 @@ src['app.core.js']=core
 more=src['app.more.js']
 assert more.rstrip().endswith('init();')
 src['app.more.js']=more.rstrip()[:-len('init();')]
-js='\n'.join(src[f] for f in ['app.data.js','app.core.js','app.feat.js','app.sim.js','app.help.js','app.dev.js','app.pers.js','app.views.js','app.ctx.js','app.metodo.js','app.inverso.js','app.pdf.js','app.look.js','app.more.js'])+'\n'+open('web.js').read()
+js='\n'.join(src[f] for f in ['app.data.js','app.core.js','app.feat.js','app.sim.js','app.help.js','app.dev.js','app.pers.js','app.views.js','app.ctx.js','app.metodo.js','app.inverso.js','app.pdf.js','app.look.js','app.more.js'])+'\n'+open('web.js').read()+'\n'+open('web.equipe.js').read()
 sh=open('app.shell.html').read()
 sh=sh.replace('<title>Prumo Feedback · App</title>','<title>Prumo Feedback · Testes</title>\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n<meta name="apple-mobile-web-app-title" content="Prumo Feedback">\n<link rel="manifest" href="manifest.webmanifest">\n<link rel="apple-touch-icon" href="apple-touch-icon.png">\n<meta name="theme-color" content="#4A2D5E">\n<link rel="icon" href="icon-192.png">')
 sh=sh.replace('<script>\n{','<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2"></script>\n<script src="config.js"></script>\n<script>\n{')

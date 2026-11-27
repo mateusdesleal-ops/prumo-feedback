@@ -134,14 +134,14 @@ async function webBoot(){
  if(!sbReady()){$('#app').innerHTML=authView();return}
  SB=window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  const go=async session=>{
-  if(!session){USER=null;S=null;$('#app').innerHTML=authView();return}
+  if(!session){USER=null;S=null;try{ALVO=null;MEU=null;EQ.ok=false;EQ.orgs=[];EQ.membros=[];document.body.classList.remove('modo-alvo');document.getElementById('alvoBar')?.remove()}catch(e){}$('#app').innerHTML=authView();return}
   if(USER&&USER.id===session.user.id)return;USER=session.user;
   CAP.sample=makeSample();CAP.dict=makeDict();CAP.tts=makeTTS();CAP.db=dbShim;CAP.uid=USER.id;
   let local=null;try{local=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
   if(local&&local.owner&&local.owner!==USER.id)local=null;
   S=local?migrate(local):blank();S.owner=USER.id;aplicarVisaoHash();applyTheme();render();
   try{const d=await dbShim.collection().doc().get();if(d&&d.j){const remote=JSON.parse(d.j);if(!local||(remote.ts||0)>(local.ts||0)){S=migrate(remote);S.owner=USER.id;aplicarVisaoHash();applyTheme()}}else save()}catch(e){toast('Sem conexão com o banco. Seus dados ficam salvos neste aparelho por enquanto.')}
-  render()};
+  render();if(typeof eqAoEntrar==='function')eqAoEntrar()};
  const {data}=await SB.auth.getSession();await go(data.session);
  SB.auth.onAuthStateChange((ev,session)=>{if(ev==='SIGNED_IN'||ev==='SIGNED_OUT')go(session)});
 }
