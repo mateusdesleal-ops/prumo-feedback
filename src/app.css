@@ -376,3 +376,17 @@ nav.tabs .sim svg{background:var(--plum)}
 .sbrand .wm{width:20px;height:25px;margin:0 1px 2px 0;color:var(--plum)!important}
 @media(min-width:1024px){.hdbrand{display:none!important}}
 @media(min-width:1024px){.sbrand{color:var(--plum)!important}}
+/* Método Prumo */
+.mpl{display:inline-grid;place-items:center;border-radius:10px;background:var(--plum);color:#fff;font-weight:800;flex:none;line-height:1}
+.mprow{display:flex;gap:6px;margin-top:8px}
+.mprow>span{flex:1;display:grid;justify-items:center;gap:2px;padding:10px 2px;border-radius:12px;background:var(--chip)}
+.mprow b{font-size:26px;line-height:1;color:var(--plum);font-weight:800}
+.mprow small{font-size:11px;color:var(--mut);font-weight:600}
+.mprow.sm>span{padding:6px 2px}.mprow.sm b{font-size:17px}.mprow.sm small{font-size:10px}
+.mprow>span:first-child{background:var(--plum)}.mprow>span:first-child b,.mprow>span:first-child small{color:#fff}
+.mpstep summary{display:flex;gap:12px;align-items:center;cursor:pointer;list-style:none}
+.mpstep summary::-webkit-details-marker{display:none}
+.mpstep[open] summary svg.i:last-child{transform:rotate(90deg)}
+.mp{border-left:4px solid var(--plum)}
+.mphd{display:flex;gap:10px;align-items:center}
+.mprev{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--sf2)}

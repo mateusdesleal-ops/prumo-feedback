@@ -1,10 +1,10 @@
 A.goPlanos=()=>{closeSheet();go('assinatura')};
 /* ---------- feedback ---------- */
 let FB=null;
-const fbNew=lid=>({id:null,lid:lid||'',anon:!lid&&false,tipo:'Desenvolvimento',sit:'',comp:'',imp:'',obj:'',res:'',metodo:'SCI',tom:'Firme e respeitoso',texto:'',step:0});
+const fbNew=lid=>({id:null,lid:lid||'',anon:!lid&&false,tipo:'Desenvolvimento',sit:'',comp:'',imp:'',obj:'',res:'',metodo:'Prumo',tom:'Firme e respeitoso',texto:'',step:0,pens:'',emo:'',pensRev:null});
 V.feedbacks=()=>{const L=S.ev.filter(e=>e.tipo==='feedback').sort((a,b)=>b.data.localeCompare(a.data));return {t:'Feedbacks',act:`<button class="ib" data-a="go" data-v="fbNovo" aria-label="Novo feedback">${ic('plus')}</button>`,h:
  L.length?`<div class="list">${L.map(e=>`<button class="row" data-a="go" data-v="fbVer" data-id="${e.id}"><span class="grow"><b style="font-weight:600">${esc(e.titulo)}</b><br><span class="sm mut">${esc(lidN(e.lid)||'Modo anônimo')} · ${esc(fd(e.data))} · ${esc(e.metodo||'')}</span></span><span class="tag ${e.status==='realizado'?'o':'w'}">${esc(e.status)}</span></button>`).join('')}</div>`:empty('fb','Nenhum feedback ainda.',`<button class="btn" style="margin-top:12px" data-a="go" data-v="fbNovo">Preparar feedback</button>`)}};
-V.fbNovo=p=>{if(!FB||p.reset!==undefined||(p.lid&&FB.lid!==p.lid&&!FB.id))FB=fbNew(p.lid);if(p.id&&FB.id!==p.id){const e=S.ev.find(x=>x.id===p.id);FB={...fbNew(),...e.fb,id:e.id,texto:e.texto,step:2}}
+V.fbNovo=p=>{if(!FB||p.reset!==undefined||(p.lid&&FB.lid!==p.lid&&!FB.id)){FB=fbNew(p.lid);delete p.reset}if(p.id&&FB.id!==p.id){const e=S.ev.find(x=>x.id===p.id);FB={...fbNew(),...e.fb,id:e.id,texto:e.texto,step:2}}
  const f=FB;let h='';
  const steps=`<div class="ob" style="padding:0;min-height:0"><div class="steps">${[0,1,2].map(i=>`<i class="${i<=f.step?'on':''}"></i>`).join('')}</div></div>`;
  if(f.step===0)h=`<h2>Para quem é o feedback?</h2><p class="mut sm" style="margin-bottom:14px">No modo anônimo, nada é vinculado a um liderado.</p>
