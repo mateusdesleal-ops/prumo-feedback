@@ -23,13 +23,13 @@ Deno.serve(async (req) => {
   if (!text) return json({ error: "texto_vazio" }, 400);
   const voice = VOZES.has(String(b.voice)) ? String(b.voice) : "Kore";
   const style = String(b.style ?? "").slice(0, 200);
-  const key = Deno.env.get("GEMINI_API_KEY");
-  if (!key) return json({ error: "sem_chave_gemini" }, 500);
+  const chaves = [["gratis", Deno.env.get("GEMINI_API_KEY")], ["pago", Deno.env.get("GEMINI_API_KEY_PAGO")]].filter((c) => c[1]) as string[][];
+  if (!chaves.length) return json({ error: "sem_chave_gemini" }, 500);
 
   const prompt = `Fale em português do Brasil, com naturalidade de uma conversa real ao telefone, sem soar como leitura${style ? `, ${style}` : ""}:\n${text}`;
   const models = [Deno.env.get("GEMINI_TTS_MODEL") ?? "gemini-3.5-flash-tts", "gemini-flash-tts-latest", "gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"].filter((m, i, a) => a.indexOf(m) === i);
   const erros: string[] = [];
-  for (const model of models) {
+  for (const [plano, key] of chaves) for (const model of models) {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: "POST",
       headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
@@ -41,11 +41,13 @@ Deno.serve(async (req) => {
     if (res.ok) {
       const d = await res.json();
       const part = (d?.candidates?.[0]?.content?.parts ?? []).find((p: { inlineData?: { data?: string } }) => p.inlineData?.data);
-      if (part) return json({ audio: part.inlineData.data, mime: part.inlineData.mimeType ?? "audio/L16;rate=24000", model });
-      erros.push(`vazio:${model}`);
+      if (part) {
+        if (plano === "pago") await admin.from("ai_usage").insert({ user_id: u.user.id, task: "tts", provider: "gemini_pago", model, ok: true });
+        return json({ audio: part.inlineData.data, mime: part.inlineData.mimeType ?? "audio/L16;rate=24000", model, plano });
+      }
+      erros.push(`vazio:${plano}:${model}`);
     } else {
-      erros.push(`${res.status}:${model}:${(await res.text()).replace(/\s+/g, " ").slice(0, 80)}`);
-      if (res.status === 401 || res.status === 403) break;
+      erros.push(`${plano}_${res.status}:${model}:${(await res.text()).replace(/\s+/g, " ").slice(0, 80)}`);
     }
   }
   console.error("falha_tts", erros.join(" | "));

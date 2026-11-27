@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
   const user = u?.user;
   if (!user) return json({ error: "nao_autenticado" }, 401);
 
-  let body: { action?: string; session_id?: number; seconds?: number; scenario?: string } = {};
+  let body: { action?: string; session_id?: number; seconds?: number; scenario?: string; pago?: boolean } = {};
   try { body = await req.json(); } catch { /* corpo opcional */ }
 
   // encerrar sessão: registra a duração (para controle de minutos)
@@ -36,7 +36,9 @@ Deno.serve(async (req) => {
   const { count } = await admin.from("sim_sessions").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("started_at", desde);
   if ((count ?? 0) >= SESSOES_DIA) return json({ error: "limite_diario" }, 429);
 
-  const key = Deno.env.get("GEMINI_API_KEY");
+  // gratuito primeiro; o app só pede o pago (pago: true) se a chamada pelo gratuito não conectar
+  const pago = (body as { pago?: boolean }).pago === true && !!Deno.env.get("GEMINI_API_KEY_PAGO");
+  const key = pago ? Deno.env.get("GEMINI_API_KEY_PAGO") : Deno.env.get("GEMINI_API_KEY");
   if (!key) return json({ error: "sem_chave_gemini" }, 500);
   const model = Deno.env.get("GEMINI_LIVE_MODEL") ?? "gemini-3.8-live";
 
@@ -53,6 +55,6 @@ Deno.serve(async (req) => {
   if (!res.ok) return json({ error: `gemini_${res.status}`, detalhe: (await res.text()).slice(0, 300) }, 502);
   const tok = await res.json();
 
-  const { data: sess } = await admin.from("sim_sessions").insert({ user_id: user.id, scenario: String(body.scenario ?? "").slice(0, 80) }).select("id").single();
-  return json({ token: tok.name, model, session_id: sess?.id ?? null });
+  const { data: sess } = await admin.from("sim_sessions").insert({ user_id: user.id, scenario: (pago ? "[pago] " : "") + String(body.scenario ?? "").slice(0, 70) }).select("id").single();
+  return json({ token: tok.name, model, session_id: sess?.id ?? null, pago, temPago: !!Deno.env.get("GEMINI_API_KEY_PAGO") });
 });

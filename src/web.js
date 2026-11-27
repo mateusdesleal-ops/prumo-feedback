@@ -88,7 +88,7 @@ async function liveStart(){
  const falhar=msg=>{L.closed=true;try{L.session&&L.session.close()}catch(e){}try{L.stream&&L.stream.getTracks().forEach(t=>t.stop())}catch(e){}try{ctxIn.close()}catch(e){}clearInterval(C.timer);CALL=null;const el=$('#call');if(el)el.remove();
   sheet(`<h3>Não foi possível iniciar a chamada em tempo real</h3><p class="mut" style="margin:8px 0">${esc(msg)}</p><div class="btns"><button class="btn line" data-a="closeSheet">Fechar</button><button class="btn" style="flex:1" data-a="simTexto">Usar modo alternativo</button></div>`)};
  if(MIC_PRE){L.stream=MIC_PRE;MIC_PRE=null}else{const r=await pedirMic();if(r.erro)return falhar(r.erro);L.stream=r.stream}
- let tk;try{tk=await callFn('live-token',{scenario:c.id})}catch(e){return falhar(e.message)}
+ let tk;try{tk=await callFn('live-token',{scenario:c.id})}catch(e){try{tk=await callFn('live-token',{scenario:c.id,pago:true});if(!tk.pago)throw e}catch(e2){return falhar(e.message)}}/* gratuito primeiro; pago só se o gratuito falhar */
  L.sid=tk.session_id;
  let G;try{G=await import('https://esm.sh/@google/genai')}catch(e){return falhar('Não consegui carregar o módulo de voz. Verifique a conexão.')}
  const stopPlayback=()=>{L.sources.forEach(s=>{try{s.stop()}catch(e){}});L.sources=[];L.next=0;if(CALL===C&&C.state==='speaking')setCallState('idle')};
@@ -105,7 +105,9 @@ async function liveStart(){
    if(sc.outputTranscription&&sc.outputTranscription.text){const lu=C.turns[C.turns.length-1];if(lu&&lu.w==='u')lu.done=true;addTurn('p',sc.outputTranscription.text)}
    if(sc.modelTurn&&sc.modelTurn.parts)sc.modelTurn.parts.forEach(pt=>{if(pt.inlineData&&pt.inlineData.data&&!C.muted&&!C.paused)play(pt.inlineData.data)});
    if(sc.turnComplete){const lp=C.turns[C.turns.length-1];if(lp)lp.done=true}}}});
- try{L.session=await conectar(config)}catch(e){try{delete config.speechConfig;L.session=await conectar(config)}catch(e2){return falhar('O serviço de voz recusou a conexão. Confira a chave do Gemini e o nome do modelo de voz.')}}
+ try{L.session=await conectar(config)}catch(e){try{const sc=config.speechConfig;delete config.speechConfig;try{L.session=await conectar(config)}catch(e1){config.speechConfig=sc;throw e1}}catch(e2){
+  if(tk.temPago&&!tk.pago){try{callFn('live-token',{action:'end',session_id:L.sid,seconds:0}).catch(()=>{});tk=await callFn('live-token',{scenario:c.id,pago:true});L.sid=tk.session_id;L.session=await conectar(config)}catch(e3){return falhar('O serviço de voz recusou a conexão nos dois planos. Tente de novo em alguns minutos.')}}
+  else return falhar('O serviço de voz recusou a conexão. Pode ser o limite gratuito do Google: tente de novo mais tarde ou use o modo alternativo.')}}
  // microfone → PCM 16 kHz
  try{const url=URL.createObjectURL(new Blob([WORKLET],{type:'application/javascript'}));await ctxIn.audioWorklet.addModule(url);const src=ctxIn.createMediaStreamSource(L.stream);L.node=new AudioWorkletNode(ctxIn,'cap');src.connect(L.node);const mudo=ctxIn.createGain();mudo.gain.value=0;L.node.connect(mudo);mudo.connect(ctxIn.destination);/* sem saída o Safari para de processar */
   const ratio=ctxIn.sampleRate/16000;L.node.port.onmessage=e=>{if(L.muted||C.paused||L.closed)return;const f=e.data,n=Math.floor(f.length/ratio),o=new Int16Array(n);for(let i=0;i<n;i++){const v=Math.max(-1,Math.min(1,f[Math.floor(i*ratio)]));o[i]=v<0?v*32768:v*32767}try{L.session.sendRealtimeInput({audio:{data:b64(o.buffer),mimeType:'audio/pcm;rate=16000'}})}catch(err){}}}

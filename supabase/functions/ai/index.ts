@@ -15,9 +15,8 @@ const json = (b: unknown, status = 200) =>
 
 type Req = { task?: string; prompt?: string; json?: boolean; tier?: "quick" | "default" | "complex"; persona?: boolean };
 
-async function gemini(r: Req): Promise<{ text: string; model: string }> {
-  const key = Deno.env.get("GEMINI_API_KEY");
-  if (!key) throw new Error("sem_chave_gemini");
+async function geminiCom(r: Req, key: string | undefined, rotulo: string): Promise<{ text: string; model: string }> {
+  if (!key) throw new Error(`sem_chave_${rotulo}`);
   const principal = Deno.env.get("GEMINI_MODEL") ?? "gemini-4-hydrogen";
   const models = [principal, "gemini-3.6-flash", "gemini-flash-latest", "gemini-flash-lite-latest"].filter((m, i, a) => a.indexOf(m) === i);
   let last = "";
@@ -41,13 +40,17 @@ async function gemini(r: Req): Promise<{ text: string; model: string }> {
       if (text) return { text, model };
       last = "resposta_vazia";
     } else {
-      last += (last ? " | " : "") + `gemini_${res.status}:${model}:${(await res.text()).replace(/\s+/g, " ").slice(0, 90)}`;
+      last += (last ? " | " : "") + `${rotulo}_${res.status}:${model}:${(await res.text()).replace(/\s+/g, " ").slice(0, 90)}`;
       if (res.status === 401 || res.status === 403) break; // chave recusada: não adianta trocar de modelo
       if (res.status >= 500) await new Promise((r) => setTimeout(r, 700)); // sobrecarga: espera um pouco e tenta o próximo
     }
   }
   throw new Error(last);
 }
+
+// 1º Gemini gratuito, 2º Groq gratuito, 3º (último caso) Gemini pago, de um projeto separado com cobrança ativa
+const gemini = (r: Req) => geminiCom(r, Deno.env.get("GEMINI_API_KEY"), "gemini");
+const gemini_pago = (r: Req) => geminiCom(r, Deno.env.get("GEMINI_API_KEY_PAGO"), "gemini_pago");
 
 async function groq(r: Req): Promise<{ text: string; model: string }> {
   const key = Deno.env.get("GROQ_API_KEY");
@@ -91,7 +94,7 @@ Deno.serve(async (req) => {
   const { count } = await admin.from("ai_usage").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", desde);
   if ((count ?? 0) >= LIMITE_DIA) return json({ error: "limite_diario" }, 429);
 
-  const ordem = (Deno.env.get("AI_PROVIDER") ?? "gemini") === "groq" ? [groq, gemini] : [gemini, groq];
+  const ordem = (Deno.env.get("AI_PROVIDER") ?? "gemini") === "groq" ? [groq, gemini, gemini_pago] : [gemini, groq, gemini_pago];
   const erros: string[] = [];
   for (const motor of ordem) {
     try {
@@ -105,6 +108,6 @@ Deno.serve(async (req) => {
   console.error("falha_ia", erros.join(" || "));
   await admin.from("ai_usage").insert({ user_id: user.id, task: body.task ?? "geral", provider: "nenhum", model: erros.join(" || ").slice(0, 900), ok: false });
   const limite = erros.some((e) => e.includes("_429"));
-  const sobrecarga = erros.some((e) => /gemini_50\d/.test(e));
+  const sobrecarga = erros.some((e) => /gemini(_pago)?_50\d/.test(e));
   return json({ error: limite ? "limite_fornecedor" : sobrecarga ? "sobrecarga" : "falha_ia", detalhes: erros }, limite ? 429 : 502);
 });
