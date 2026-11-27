@@ -1937,6 +1937,15 @@ Dificuldade (${C.nivel.nome}): ${C.nivel.prompt}
 Regras: respostas curtas (1 a 3 frases), reaja ao que o líder acabou de dizer, mude de postura gradualmente conforme a escuta e a clareza dele. Se ele for desrespeitoso, reaja como uma pessoa real, sem agressividade. Se houver um acordo claro com próximos passos e o líder encerrar, despeça-se.`}
 const b64=buf=>{let s='';const u=new Uint8Array(buf);for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)};
 const WORKLET=`class P extends AudioWorkletProcessor{constructor(){super();this.b=[];this.n=0}process(i){const c=i[0]&&i[0][0];if(c){this.b.push(new Float32Array(c));this.n+=c.length;if(this.n>=2048){const o=new Float32Array(this.n);let k=0;for(const x of this.b){o.set(x,k);k+=x.length}this.port.postMessage(o,[o.buffer]);this.b=[];this.n=0}}return true}}registerProcessor('cap',P)`;
+let MIC_PRE=null;
+const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent),CRIOS=/CriOS/.test(navigator.userAgent);
+async function pedirMic(){if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return{erro:'Este navegador não oferece acesso ao microfone. Use o modo alternativo ou abra no Safari/Chrome atualizado.'};
+ let e1;for(const cons of [{audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}},{audio:true}]){try{return{stream:await navigator.mediaDevices.getUserMedia(cons)}}catch(e){e1=e;if(e.name==='NotAllowedError'||e.name==='SecurityError')break}}
+ const n=e1&&e1.name;
+ if(n==='NotAllowedError'||n==='SecurityError')return{erro:IOS?`O microfone está bloqueado para este site. No iPhone: abra Ajustes › ${CRIOS?'Chrome':'Safari'} › ative Microfone. Depois recarregue a página e, quando aparecer o pedido, toque em Permitir.`:'O microfone está bloqueado para este site. Clique no cadeado ao lado do endereço, permita o Microfone e recarregue a página.'};
+ if(n==='NotFoundError'||n==='OverconstrainedError')return{erro:'Nenhum microfone foi encontrado neste aparelho.'};
+ if(n==='NotReadableError'||n==='AbortError')return{erro:'O microfone está sendo usado por outro app (ligação, gravador, outra aba). Feche-o e tente de novo.'};
+ return{erro:'Não consegui acessar o microfone ('+(n||'erro')+').'}}
 async function liveStart(){
  const c=cenBy(SC.cen),p=persBy(SC.pers);SC.modo='voz';
  if(saldo('voz')<1)return sheet(`<h3>Sem minutos disponíveis</h3><p class="mut" style="margin:8px 0">Seu saldo de voz acabou neste mês.</p><div class="btns"><button class="btn full" data-a="goPlanos">Ver opções</button></div>`);
@@ -1948,7 +1957,7 @@ async function liveStart(){
  const L={muted:false,session:null,stream:null,node:null,sources:[],next:0,gain:ctxOut.createGain(),closed:false,sid:null};L.gain.connect(ctxOut.destination);C.live=L;
  const falhar=msg=>{L.closed=true;try{L.session&&L.session.close()}catch(e){}try{L.stream&&L.stream.getTracks().forEach(t=>t.stop())}catch(e){}ctxIn.close();ctxOut.close();clearInterval(C.timer);CALL=null;const el=$('#call');if(el)el.remove();
   sheet(`<h3>Não foi possível iniciar a chamada em tempo real</h3><p class="mut" style="margin:8px 0">${esc(msg)}</p><div class="btns"><button class="btn line" data-a="closeSheet">Fechar</button><button class="btn" style="flex:1" data-a="simTexto">Usar modo alternativo</button></div>`)};
- try{L.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}})}catch(e){return falhar('Permita o uso do microfone para treinar por voz.')}
+ if(MIC_PRE){L.stream=MIC_PRE;MIC_PRE=null}else{const r=await pedirMic();if(r.erro)return falhar(r.erro);L.stream=r.stream}
  let tk;try{tk=await callFn('live-token',{scenario:c.id})}catch(e){return falhar(e.message)}
  L.sid=tk.session_id;
  let G;try{G=await import('https://esm.sh/@google/genai')}catch(e){return falhar('Não consegui carregar o módulo de voz. Verifique a conexão.')}
@@ -1977,7 +1986,10 @@ async function liveStart(){
 }
 A.simTexto=()=>{closeSheet();_simStartCascata()};
 const _simStartCascata=A.simStart;
-A.simStart=()=>{const durs=chipsVal('sc_dur');if(durs[0])SC.dur=parseInt(durs[0]);if(navigator.mediaDevices&&window.AudioWorkletNode)liveStart();else _simStartCascata()};
+A.simStart=async()=>{const durs=chipsVal('sc_dur');if(durs[0])SC.dur=parseInt(durs[0]);if(!(navigator.mediaDevices&&window.AudioWorkletNode))return _simStartCascata();
+ const r=await pedirMic();/* pede o microfone logo no toque, antes de qualquer outra coisa (exigência do iPhone) */
+ if(r.erro)return sheet(`<h3>Microfone não liberado</h3><p class="mut" style="margin:8px 0">${esc(r.erro)}</p><div class="btns"><button class="btn line" data-a="closeSheet">Fechar</button><button class="btn" style="flex:1" data-a="simTexto">Usar modo alternativo</button></div>`);
+ MIC_PRE=r.stream;liveStart()};
 const _callMic=A.callMic;A.callMic=()=>{if(CALL&&CALL.live){CALL.live.muted=!CALL.live.muted;renderCall();return}_callMic()};
 const _callMute=A.callMute;A.callMute=()=>{if(CALL&&CALL.live){CALL.muted=!CALL.muted;CALL.live.gain.gain.value=CALL.muted?0:1;renderCall();return}_callMute()};
 const _callPause=A.callPause;A.callPause=()=>{_callPause()};
