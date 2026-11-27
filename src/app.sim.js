@@ -1,8 +1,9 @@
 /* ---------- Prumo Simula ---------- */
 const cenAll=()=>[...CEN,...S.cenCustom];
 const cenBy=id=>cenAll().find(c=>c.id===id);
+const PERS_OCULTOS=[];/* personagens de sistema (ex.: recrutadora da devolutiva invertida), fora das listas de escolha */
 const allPers=()=>[...PERS,...((S&&S.persCustom)||[])];
-const persBy=id=>allPers().find(p=>p.id===id)||PERS[0];
+const persBy=id=>allPers().find(p=>p.id===id)||PERS_OCULTOS.find(p=>p.id===id)||PERS[0];
 function face(p,sz,cls=''){return `<svg class="${cls}" width="${sz}" height="${sz}" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="60" fill="#E3EAE6"/>${p.long?`<path d="M26 82c0-36 14-56 34-56s34 20 34 56z" fill="${p.hair}"/>`:''}<g class="head"><circle cx="60" cy="54" r="24" fill="${p.skin}"/><path d="M36 50c0-15 10-25 24-25s24 10 24 25c-6-8-14-11-24-11s-18 3-24 11z" fill="${p.hair}"/><ellipse class="eye" cx="51" cy="56" rx="2.6" ry="3" fill="#1d1d1b"/><ellipse class="eye" cx="69" cy="56" rx="2.6" ry="3" fill="#1d1d1b"/><ellipse class="mouth" cx="60" cy="67" rx="5" ry="2.2" fill="#7a3b33"/></g><path d="M20 120c4-24 20-36 40-36s36 12 40 36z" fill="${p.shirt}"/></svg>`}
 function videoAvatar(p){return `<svg viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" aria-label="Avatar de ${esc(p.nome)}"><rect width="300" height="400" fill="#cfd8d3"/><rect y="250" width="300" height="150" fill="#b5c1bb"/><rect x="200" y="40" width="70" height="90" rx="4" fill="#e6ebe8"/><rect x="208" y="48" width="54" height="74" fill="#39766A" opacity=".35"/><rect x="24" y="70" width="60" height="150" rx="4" fill="#c2ccc7"/>
  ${p.long?`<path d="M80 300c0-120 30-200 70-200s70 80 70 200z" fill="${p.hair}"/>`:''}

@@ -116,7 +116,7 @@ async function liveStart(){
  const reviver=()=>{if(L.closed)return;if(ctxIn.state!=='running')ctxIn.resume().catch(()=>{});const tr=L.stream&&L.stream.getAudioTracks()[0];if(tr&&tr.readyState==='ended'&&!L.reabrindo){L.reabrindo=true;pedirMic().then(r=>{L.reabrindo=false;if(r.stream&&!L.closed){L.stream=r.stream;const s2=ctxIn.createMediaStreamSource(r.stream);s2.connect(L.node)}})}};
  ctxIn.onstatechange=reviver;L.vig=setInterval(reviver,1500);document.addEventListener('visibilitychange',reviver);
  C.connecting=false;C.t0=Date.now();C.timer=setInterval(tick,500);renderCall();
- try{L.session.sendClientContent({turns:[{role:'user',parts:[{text:'('+(ehRH(C.cen)?'A pessoa do RH':'O líder')+' acabou de entrar na chamada. Cumprimente de forma breve, no seu estilo, e aguarde ele falar.)'}]}],turnComplete:true})}catch(e){}
+ try{L.session.sendClientContent({turns:[{role:'user',parts:[{text:C.cen.inv?'(O candidato acabou de entrar na chamada. Cumprimente, agradeça a participação, explique o objetivo da conversa em 1 ou 2 frases e pergunte se ele pode falar agora.)':'('+(ehRH(C.cen)?'A pessoa do RH':'O líder')+' acabou de entrar na chamada. Cumprimente de forma breve, no seu estilo, e aguarde ele falar.)'}]}],turnComplete:true})}catch(e){}
 }
 A.simTexto=()=>{closeSheet();_simStartCascata()};
 const _simStartCascata=A.simStart;
